@@ -4,7 +4,7 @@ import Player.Player;
 
 public class Bandage extends HealingItems {
     public Bandage(int healing){
-        super("Bandage",1,//,//);
+        super("Bandage",1,"","");
     }
     @Override
     public void Healing(Player player){

@@ -5,7 +5,7 @@ import Player.Player;
 
 public class Shotgun extends Gun {
     public Shotgun(){
-        super("Shotgun",2,3,,,3000);
+        super("Shotgun",2,3,"","",3000);
     }
     @Override
     public double getRecoilAmount() {

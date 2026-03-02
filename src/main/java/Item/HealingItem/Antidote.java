@@ -8,7 +8,7 @@ import Status.Status;
 public class Antidote extends HealingItems {
     private Random random = new Random();
     public Antidote(){
-        super("Antidote",1,//,//);
+        super("Antidote",1,"//","//");
     }
     @Override
     public void Healing(Player player){
