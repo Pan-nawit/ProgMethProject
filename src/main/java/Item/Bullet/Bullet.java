@@ -1,4 +1,4 @@
-package Item;
+package Item.Bullet;
 
 import java.awt.*;
 

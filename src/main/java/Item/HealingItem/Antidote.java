@@ -1,10 +1,11 @@
-package Item;
+package Item.HealingItem;
 import java.util.List;
 import java.util.Random;
+
 import Player.Player;
 import Status.Status;
 
-public class Antidote extends HealingItems{
+public class Antidote extends HealingItems {
     private Random random = new Random();
     public Antidote(){
         super("Antidote",1,//,//);

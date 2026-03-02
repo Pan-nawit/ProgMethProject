@@ -1,6 +1,7 @@
-package Item;
+package Item.Weapon;
 
 import Interface.Cooldownable;
+import Item.Bullet.Bullet;
 import Player.Player;
 
 public abstract class Gun extends Weapon implements Cooldownable {

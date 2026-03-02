@@ -1,8 +1,9 @@
-package Item;
+package Item.Weapon;
 
+import Item.Bullet.Bullet;
 import Player.Player;
 
-public class Shotgun extends Gun{
+public class Shotgun extends Gun {
     public Shotgun(){
         super("Shotgun",2,3,,,3000);
     }

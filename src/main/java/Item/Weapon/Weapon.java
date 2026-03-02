@@ -1,7 +1,8 @@
-package Item;
+package Item.Weapon;
+import Item.Item;
 import Player.Player;
 
-public abstract class Weapon extends Item{
+public abstract class Weapon extends Item {
     public int getDamage() {
         return damage;
     }

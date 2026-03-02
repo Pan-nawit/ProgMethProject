@@ -1,8 +1,9 @@
-package Item;
+package Item.HealingItem;
 
+import Item.Item;
 import Player.Player;
 
-public abstract class HealingItems extends Item{
+public abstract class HealingItems extends Item {
     public HealingItems(String name,int amount,String imagePath, String soundPath){
         super(name, amount, imagePath, soundPath);
     }

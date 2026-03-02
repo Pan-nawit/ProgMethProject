@@ -1,6 +1,6 @@
-package Item;
+package Item.Weapon;
 
-public class MachineGun extends Gun{
+public class MachineGun extends Gun {
     public MachineGun(){
         super("MachineGun",10,1,,100);
     }

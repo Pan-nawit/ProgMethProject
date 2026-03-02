@@ -1,8 +1,8 @@
-package Item;
+package Item.HealingItem;
 
 import Player.Player;
 
-public class Bandage extends HealingItems{
+public class Bandage extends HealingItems {
     public Bandage(int healing){
         super("Bandage",1,//,//);
     }
