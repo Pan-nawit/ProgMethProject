@@ -1,0 +1,134 @@
+package Player;
+import Item.Item;
+import Status.Status;
+import java.util.ArrayList;
+import java.util.List;
+import java.awt.Rectangle;
+public class Player {
+    private int hp;
+    private int speed;
+    private int maxHp = 5;
+    private int defaultSpeed = 10;
+
+    private int x, y;
+    private int width = 32;  // ความกว้างของตัวละคร
+    private int height = 32;
+    private char lastFacing = 'w';
+    //
+    private double recoil = 0.0;     // ค่าความส่าย/แรงถีบปัจจุบัน (0 = แม่นสุด)
+    private double maxRecoil = 10.0;
+
+    private List<Status> statusList = new ArrayList<>();
+    private List<Item> inventory = new ArrayList<>();
+
+    public Player(){
+        this.x=0;
+        this.y=0;
+        setHp(maxHp);
+        setSpeed(defaultSpeed);
+    }
+
+    public void move(char direction) {
+        int currentSpeed = getSpeed();
+        direction = Character.toLowerCase(direction);
+        this.lastFacing=direction;
+        switch (direction) {
+            case 'w' -> y -= currentSpeed; // เดินขึ้น
+            case 's' -> y += currentSpeed; // เดินลง
+            case 'a' -> x -= currentSpeed; // เดินซ้าย
+            case 'd' -> x += currentSpeed; // เดินขวา
+        }
+    }
+    public void onAttacked(int damage, Status incomingStatus) {
+        setHp(getHp() - damage);
+        if (incomingStatus != null) {
+            if (!hasStatus(incomingStatus.getName())) {
+                addStatus(incomingStatus);
+            }
+        }
+    }
+    public void applyKnockback(int force) {
+        switch (lastFacing) {
+            case 'w' -> y += force; // หันหน้าขึ้น (ยิงขึ้น) ตัวกระเด็นลง
+            case 's' -> y -= force; // หันหน้าลง ตัวกระเด็นขึ้น
+            case 'a' -> x += force; // หันซ้าย ตัวกระเด็นขวา
+            case 'd' -> x -= force; // หันขวา ตัวกระเด็นซ้าย
+        }
+    }
+
+    public void addRecoil(double amount) {
+        recoil += amount;
+        if (recoil > maxRecoil) recoil = maxRecoil;
+    }
+    public void recoverRecoil() {
+        if (recoil > 0) {
+            recoil -= 0.5; // ค่อยๆ ลดลงเรื่อยๆ
+            if (recoil < 0) recoil = 0;
+        }
+    }
+
+    public void addItem(Item newItem) {
+        for (Item existingItem : inventory) {
+            if (existingItem.getName().equals(newItem.getName())) {
+                existingItem.addAmount(newItem.getAmount());
+                return; // ถ้าเจอชื่อซ้ำ ให้บวกจำนวนแล้วจบการทำงานเลย
+            }
+        }
+        inventory.add(newItem); // ถ้าไม่เคยมี ให้เพิ่มเป็นชิ้นใหม่
+    }
+
+    public void useItem(int index) {
+        if (index >= 0 && index < inventory.size()) {
+            Item item = inventory.get(index);
+            item.use(this);
+            if (item.isEmpty()) {
+                inventory.remove(index); // ถ้ากระสุนหมด/ยาหมด ลบทิ้ง
+            }
+        }
+    }
+
+    public void addStatus(Status newStatus) {
+        if (!hasStatus(newStatus.getName())) {
+            newStatus.apply(this);
+            statusList.add(newStatus);
+        }
+    }
+    private boolean hasStatus(String statusName) {
+        return statusList.stream().anyMatch(s -> s.getName().equals(statusName));
+    }
+    public void removeStatus(String statusName) {
+        statusList.stream()
+                .filter(s -> s.getName().equals(statusName))
+                .findFirst()
+                .ifPresent(s -> {
+                    s.undo(this); // <--- คืนค่า speed เป็น defaultSpeed โดยไม่ต้องใช้ if-else ใน Player
+                    statusList.remove(s);
+                });
+    }
+    public Rectangle getBounds() {
+        return new Rectangle(x, y, width, height);
+    }
+    public int getHp() {return hp;}
+    public void setHp(int hp) {
+        this.hp = hp;
+        if (this.hp > maxHp) this.hp = maxHp;
+        if (this.hp < 0) this.hp = 0;
+    }
+    public int getSpeed() {
+        return speed;
+    }
+    public int getDefaultSpeed() {
+        return defaultSpeed;
+    }
+    public void setSpeed(int speed) {
+        this.speed = speed;
+    }
+    public int getX(){return x;}
+    public int getY(){return y;}
+    public int getWidth() { return width; }
+    public int getHeight() { return height; }
+    public double getRecoil() { return recoil; }
+    public char getLastFacing() {return lastFacing;}
+    public List<Item> getInventory() { return inventory; }
+    public List<Status> getStatusList() { return statusList; }
+}
