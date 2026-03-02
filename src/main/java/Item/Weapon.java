@@ -5,30 +5,29 @@ public abstract class Weapon extends Item{
     public int getDamage() {
         return damage;
     }
-
     public void setDamage(int damage) {
         this.damage = damage;
     }
-
     protected int damage;
-    public Weapon(String name,int amount,int damage){
-        super(name,amount);
+    public Weapon(String name,int amount,int damage,String imagePath, String soundPath){
+        super(name,amount,imagePath,soundPath);
         setDamage(damage);
     }
     @Override
-    public void use(){
+    public void use(Player player){
         if(!isEmpty()){
-            shoot();
+            shoot(player);
+            applyWeaponRecoil(player);
             reduceAmount();
-            System.out.println("Used: " + name);
+            System.out.println("Used: " + name +  " | Damage: " + damage);
         }
         else{
             System.out.println(name + " is empty!");
         }
     }
-    public abstract void shoot();
+    public abstract void shoot(Player player);
     public abstract double getRecoilAmount();
-    private void applyWeaponRecoil() {
-        Player.setRecoil(getRecoilAmount());
+    private void applyWeaponRecoil(Player player) {
+        player.addRecoil(getRecoilAmount());
     }
 }

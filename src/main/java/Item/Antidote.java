@@ -7,16 +7,16 @@ import Status.Status;
 public class Antidote extends HealingItems{
     private Random random = new Random();
     public Antidote(){
-        super("Antidote",1);
+        super("Antidote",1,//,//);
     }
     @Override
-    public void Healing(){
-        List<Status>currentStatus = Player.getStatusList();
+    public void Healing(Player player){
+        List<Status>currentStatus = player.getStatusList();
         if(!currentStatus.isEmpty()){
             int randomIndex = random.nextInt(currentStatus.size());
-            String removed = currentStatus.remove(randomIndex);
+            Status removed = currentStatus.remove(randomIndex);
             currentStatus.remove(randomIndex);
-            System.out.println("Cured: "+removed);
+            System.out.println("Cured: "+removed.getName());
         }
         else{
             System.out.println("No status to cure");

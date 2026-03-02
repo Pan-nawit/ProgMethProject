@@ -128,6 +128,7 @@ public class Player {
     public int getWidth() { return width; }
     public int getHeight() { return height; }
     public double getRecoil() { return recoil; }
+    public char getLastFacing() {return lastFacing;}
     public List<Item> getInventory() { return inventory; }
     public List<Status> getStatusList() { return statusList; }
 }
