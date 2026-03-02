@@ -1,5 +1,7 @@
 package enemy;
 
+import Player.Player;
+
 public interface Attackable {
-    public int Attack(int player);
+    public void Attackplayer(Player p);
 }

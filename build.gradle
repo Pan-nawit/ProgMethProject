@@ -1,6 +1,9 @@
 plugins {
     id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0' // หรือลองเปลี่ยนเป็น '0.1.0' ถ้ายังไม่ได้
 }
+
 
 group = 'progmeth_2025_2'
 version = '1.0-SNAPSHOT'
@@ -9,10 +12,20 @@ repositories {
     mavenCentral()
 }
 
+javafx {
+    version = "21" // เปลี่ยนเลขนี้ให้ตรงกับรุ่น Java ที่คุณใช้
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
+}
+
+application {
+    mainClass = 'GUI.MainGame'
+}
+
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    //implementation 'org.jfree:fxgraphics2d:1.8'
 }
 
 test {
