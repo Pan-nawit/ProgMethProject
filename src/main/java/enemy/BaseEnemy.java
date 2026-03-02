@@ -63,7 +63,7 @@ public abstract class BaseEnemy implements Attackable{
     protected void resetCooldown() {
         lastAttackTime = System.currentTimeMillis();
     }
-    protected void draw(Graphics2D g) {
+    public void draw(Graphics2D g) {
         if (isDead()) return;
 
         // วาดตัว (กระพริบเมื่อโดนตี)
