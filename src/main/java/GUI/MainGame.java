@@ -145,7 +145,7 @@ public class MainGame extends Application {
                 float lmx = (float) mouseScreenX;
                 float lmy = (float)(mouseScreenY - HUD_HEIGHT);
                 gameLogic.player.setMousePos(lmx, lmy);
-                gameLogic.update(w, a, s, d, isMousePressed);
+                gameLogic.update(w, a, s, d, isMousePressed,mouseScreenX,mouseScreenY);
                 GraphicsContext gc = canvas.getGraphicsContext2D();
                 gc.clearRect(0, 0, W, H);
                 drawGame(gc, gameLogic);
