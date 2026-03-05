@@ -80,9 +80,9 @@ public class MainGame extends Application {
 
         try {
             playerImage = new Image(getClass().getResourceAsStream("/Images/player.png"));
-            //itemImages.put("Pistol", new Image(getClass().getResourceAsStream("/Images/Gun/Pistol.png")));
-            //itemImages.put("MachineGun", new Image(getClass().getResourceAsStream("/Images/Gun/Machinegun.png")));
-            //itemImages.put("Shotgun", new Image(getClass().getResourceAsStream("/shotgun.png")));
+            itemImages.put("Pistol", new Image(getClass().getResourceAsStream("/Images/Gun/Pistol.png")));
+            itemImages.put("MachineGun", new Image(getClass().getResourceAsStream("/Images/Gun/Machinegun.png")));
+            itemImages.put("Shotgun", new Image(getClass().getResourceAsStream("/shotgun.png")));
             itemImages.put("Medkit", new Image(getClass().getResourceAsStream("/Images/HealingItems/medkit.png")));
             itemImages.put("Bandage", new Image(getClass().getResourceAsStream("/Images/HealingItems/bandage.png")));
             enemyImages.put("zombie", new Image(getClass().getResourceAsStream("/Images/enemy/zombie.png")));
