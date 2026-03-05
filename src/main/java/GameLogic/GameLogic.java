@@ -3,6 +3,7 @@ package GameLogic;
 import Item.Bullet.Bullet;
 import Item.HealingItem.Medkit;
 import Item.HealingItem.Bandage;
+import Item.Weapon.Gun;
 import Item.Weapon.MachineGun;
 import Item.Weapon.Pistol;
 import Item.Weapon.Shotgun;
@@ -33,41 +34,38 @@ public class GameLogic {
     /**
      * Stage 4 = ENDLESS SURVIVAL.
      * Timer counts UP, no win condition — game ends only on death.
-     * On death the overlay shows "survived xx:xx" as a green clear screen.
      */
     public boolean isEndless = false;
 
-    private int  currentStage          = 1;
-    private int  stageDurationSeconds  = 30;
-    private long stageStartTime        = 0;
+    private int  currentStage         = 1;
+    private int  stageDurationSeconds = 30;
+    private long stageStartTime       = 0;
 
     private long lastSpawnTime    = 0;
     private long spawnCooldown    = 2000;
     private long lastItemDropTime = 0;
-    // Endless drops items more frequently (4 s base vs 8 s for timed stages)
     private long itemDropCooldown = 8000;
     private final Random random = new Random();
 
     private final int screenWidth  = 800;
     private final int screenHeight = 500;
 
-    public GameLogic()             { initGame(1); }
-    public void initGame()         { initGame(1); }
+    public GameLogic()     { initGame(1); }
+    public void initGame() { initGame(1); }
 
     public void initGame(int stage) {
-        currentStage      = stage;
-        isEndless         = (stage == 4);
-        stageDurationSeconds = stage * 30;   // irrelevant for endless
+        currentStage         = stage;
+        isEndless            = (stage == 4);
+        stageDurationSeconds = stage * 30; // irrelevant for endless
 
         spawnCooldown = switch (stage) {
             case 1 -> 2000;
             case 2 -> 1200;
             case 3 -> 700;
-            case 4 -> 700;   // starts at stage-3 speed, keeps ramping
+            case 4 -> 700;
             default -> 2000;
         };
 
-        // Endless drops items twice as often as stage 3
         itemDropCooldown = isEndless ? 4000 : 8000;
 
         player        = new Player();
@@ -82,16 +80,15 @@ public class GameLogic {
         player.setHp(5);
         player.addItem(new Pistol());
 
-        stageStartTime    = System.currentTimeMillis();
-        lastSpawnTime     = stageStartTime;
-        lastItemDropTime  = stageStartTime;
+        stageStartTime   = System.currentTimeMillis();
+        lastSpawnTime    = stageStartTime;
+        lastItemDropTime = stageStartTime;
     }
 
     public static void addBullet(Bullet b) {
         if (bullets != null) bullets.add(b);
     }
 
-    /** Seconds elapsed since stage start (always positive, used as count-up for endless). */
     public double getElapsedSeconds() {
         return (System.currentTimeMillis() - stageStartTime) / 1000.0;
     }
@@ -99,7 +96,6 @@ public class GameLogic {
     public void update(boolean w, boolean a, boolean s, boolean d, boolean isMousePressed) {
         if (isGameOver || isWon) return;
 
-        // Timed stages: win when time runs out
         if (!isEndless && getElapsedSeconds() >= stageDurationSeconds) {
             finalElapsedSeconds = getElapsedSeconds();
             isWon = true;
@@ -117,9 +113,10 @@ public class GameLogic {
 
         if (isMousePressed) {
             Weapon currentWeapon = player.getEquippedWeapon();
-            if (currentWeapon != null) {
-                currentWeapon.use(player);
-                if (currentWeapon.isEmpty()) player.removeItem(currentWeapon);
+            if (currentWeapon instanceof Gun gun) {
+                gun.setMouseTarget(player.getMouseX(), player.getMouseY());
+                gun.use(player);
+                if (gun.isEmpty()) player.removeItem(gun);
             }
         }
 
@@ -156,7 +153,6 @@ public class GameLogic {
         if (player.getHp() <= 0) {
             finalElapsedSeconds = getElapsedSeconds();
             isGameOver = true;
-            // For endless: isGameOver = true, but the overlay shows the "survived" time
             player.getStatusList().forEach(st -> player.removeStatus(st.getName()));
         }
     }
@@ -196,7 +192,7 @@ public class GameLogic {
             else if (roll < 70) spawned = new SlowZombie(sx, sy);
             else                spawned = new zombie(sx, sy);
         } else {
-            // Stage 3 AND Endless (stage 4) — full roster
+            // Stage 3 + Endless — full roster
             if      (roll < 12) spawned = new juggernaut(sx, sy);
             else if (roll < 27) spawned = new Screamers(sx, sy);
             else if (roll < 44) spawned = new Runners(sx, sy);
@@ -219,8 +215,8 @@ public class GameLogic {
         long now = System.currentTimeMillis();
         if (now - lastItemDropTime <= itemDropCooldown) return;
 
-        int ix = random.nextInt(screenWidth  - 20);
-        int iy = random.nextInt(screenHeight - 20);
+        int ix   = random.nextInt(screenWidth  - 20);
+        int iy   = random.nextInt(screenHeight - 20);
         int roll = random.nextInt(100);
 
         Item.Item drop;
@@ -231,12 +227,14 @@ public class GameLogic {
             else if (roll < 58) drop = new Pistol();
             else if (roll < 72) drop = new MachineGun();
             else if (roll < 86) drop = new Shotgun();
-            else                drop = new Medkit();   // extra heal at high roll
+            else                drop = new Medkit();
         } else {
-            if      (roll < 25) drop = new Medkit();
-            else if (roll < 50) drop = new Bandage();
-            else if (roll < 75) drop = new Pistol();
-            else                drop = new MachineGun();
+            // Timed stages: shotgun included
+            if      (roll < 20) drop = new Medkit();
+            else if (roll < 40) drop = new Bandage();
+            else if (roll < 60) drop = new Pistol();
+            else if (roll < 80) drop = new MachineGun();
+            else                drop = new Shotgun();
         }
 
         drop.setX(ix);
