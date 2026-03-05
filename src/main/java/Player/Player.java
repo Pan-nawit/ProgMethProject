@@ -16,8 +16,10 @@ public class Player {
     private int height = 32;
     private char lastFacing = 'w';
     //
-    private double recoil = 0.0;     // ค่าความส่าย/แรงถีบปัจจุบัน (0 = แม่นสุด)
+    private double recoil = 0.0;
     private double maxRecoil = 10.0;
+    private float mouseX = -1; // cursor position in logical coords
+    private float mouseY = -1;
 
     private List<Status> statusList = new ArrayList<>();
     private List<Item> inventory = new ArrayList<>();
@@ -193,5 +195,10 @@ public class Player {
     }
 
     public int getSelectedItemIndex() { return selectedItemIndex; }
+
+
+    public float getMouseX() { return mouseX; }
+    public float getMouseY() { return mouseY; }
+    public void setMousePos(float x, float y) { this.mouseX = x; this.mouseY = y; }
 
 }
