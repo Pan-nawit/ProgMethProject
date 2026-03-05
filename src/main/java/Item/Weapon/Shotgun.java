@@ -5,30 +5,36 @@ import Item.Bullet.Bullet;
 import Player.Player;
 
 public class Shotgun extends Gun {
-    public Shotgun() { super("Shotgun", 2, 3, "", "", 3000); }
+    public Shotgun() {
+        super("Shotgun", 2, 3, "", "", 3000);
+    }
 
-    @Override public double getRecoilAmount() { return 5.0; }
+    @Override
+    public double getRecoilAmount() { return 7.5; }
 
     @Override
     public void shoot(Player player) {
-        float cx = player.getX() + player.getWidth()  / 2f;
-        float cy = player.getY() + player.getHeight() / 2f;
-        float dx = player.getMouseX() - cx;
-        float dy = player.getMouseY() - cy;
-        // 3 pellets with spread perpendicular to aim direction
-        float len = (float) Math.sqrt(dx * dx + dy * dy);
-        float nx = len > 0 ? dx / len : 1; // normalized
-        float ny = len > 0 ? dy / len : 0;
-        float px = -ny; // perpendicular axis
-        float py =  nx;
-        float sp = 0.3f; // spread amount
-        GameLogic.addBullet(new Bullet(cx, cy, nx,        ny,        15, damage, name));
-        GameLogic.addBullet(new Bullet(cx, cy, nx - px*sp, ny - py*sp, 15, damage, name));
-        GameLogic.addBullet(new Bullet(cx, cy, nx + px*sp, ny + py*sp, 15, damage, name));
+        double cx = player.getX() + player.getWidth()  / 2.0;
+        double cy = player.getY() + player.getHeight() / 2.0;
+        double ddx = targetX - cx, ddy = targetY - cy;
+        double len = Math.sqrt(ddx*ddx + ddy*ddy);
+        if (len == 0) return;
+        ddx /= len; ddy /= len;
+        double[] dir = applyRecoil(ddx, ddy); // ← เพิ่มบรรทัดนี้
+        ddx = dir[0]; ddy = dir[1];                   // ← และนี้
+        // perpendicular vector สำหรับ spread
+        double perpX = -ddy;
+        double perpY =  ddx;
+
+        GameLogic.addBullet(new Bullet((int)cx, (int)cy, ddx,               ddy,               15, damage, name));
+        GameLogic.addBullet(new Bullet((int)cx, (int)cy, ddx + perpX * 0.3, ddy + perpY * 0.3, 15, damage, name));
+        GameLogic.addBullet(new Bullet((int)cx, (int)cy, ddx - perpX * 0.3, ddy - perpY * 0.3, 15, damage, name));
+
         player.applyKnockback(5);
         player.addRecoil(getRecoilAmount());
-        playGunSound();
+        playGunSound();;
     }
 
-    @Override public void playGunSound() { playSound(); }
+    @Override
+    public void playGunSound() { playSound(); }
 }

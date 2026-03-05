@@ -4,23 +4,30 @@ import GameLogic.GameLogic;
 import Item.Bullet.Bullet;
 import Player.Player;
 
+/** MachineGun — 60 shots, rapid fire */
 public class MachineGun extends Gun {
-    public MachineGun() { super("MachineGun", 60, 1, "", "", 120); }
+    public MachineGun() {
+        super("MachineGun", 60, 1, "", "", 120);
+    }
 
-    @Override public double getRecoilAmount() { return 0.5; }
+    @Override
+    public double getRecoilAmount() { return 10.0; }
 
     @Override
     public void shoot(Player player) {
-        float cx = player.getX() + player.getWidth()  / 2f;
-        float cy = player.getY() + player.getHeight() / 2f;
-        float dx = player.getMouseX() - cx;
-        float dy = player.getMouseY() - cy;
-        // slight random spread for machine gun feel
-        float spread = (float)(Math.random() * 10 - 5);
-        GameLogic.addBullet(new Bullet(cx, cy, dx + spread, dy + spread, 20, damage, name));
+        double cx = player.getX() + player.getWidth()  / 2.0;
+        double cy = player.getY() + player.getHeight() / 2.0;
+        double ddx = targetX - cx, ddy = targetY - cy;
+        double len = Math.sqrt(ddx*ddx + ddy*ddy);
+        if (len == 0) return;
+        ddx /= len; ddy /= len;
+        double[] dir = applyRecoil(ddx, ddy); // ← เพิ่มบรรทัดนี้
+        ddx = dir[0]; ddy = dir[1];                   // ← และนี้
+        GameLogic.addBullet(new Bullet((int)cx, (int)cy, ddx, ddy, 20, damage, name));
         player.addRecoil(getRecoilAmount());
         playGunSound();
     }
 
-    @Override public void playGunSound() { playSound(); }
+    @Override
+    public void playGunSound() { playSound(); }
 }
