@@ -6,8 +6,8 @@ import Item.Item;
 public abstract class Weapon extends Item {
     protected int damage;
 
-    public Weapon(String name, int ammo, int damage, String imagePath, String soundPath) {
-        super(name, ammo, imagePath, soundPath);
+    public Weapon(String name, int ammo, int damage) {
+        super(name, ammo);
         this.damage = damage;
     }
 

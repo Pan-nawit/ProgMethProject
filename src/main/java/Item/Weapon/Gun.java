@@ -2,6 +2,7 @@ package Item.Weapon;
 
 import Interface.Cooldownable;
 import Item.Bullet.Bullet;
+import Item.Item;
 import Player.Player;
 import GameLogic.GameLogic;
 
@@ -10,9 +11,9 @@ public abstract class Gun extends Weapon implements Cooldownable {
     protected long fireRate;
     protected double targetX, targetY;// ระยะห่างระหว่างนัด (Cooldown) เช่น 100ms, 500ms
     private static final java.util.Random RNG = new java.util.Random();
-    public Gun(String name,int amount,int damage,String imagePath, String soundPath,long fireRate){
-        super(name, amount, damage,imagePath,soundPath);
-        this.fireRate=fireRate;
+    public Gun(String name, int amount, int damage, long fireRate) {
+        super(name, amount, damage);
+        this.fireRate = fireRate;
     }
     @Override
     public boolean isReady() {
@@ -65,13 +66,8 @@ public abstract class Gun extends Weapon implements Cooldownable {
         ddx /= len;
         ddy /= len;
 
-        Bullet bullet = new Bullet(
-                (int) cx, (int) cy,
-                ddx, ddy,
-                20, this.damage, this.name
-        );
-        GameLogic.addBullet(bullet);
-        playGunSound();
+        GameLogic.addBullet(new Bullet((int) cx, (int) cy, ddx, ddy, 20, this.damage, this.name));
+        Item.playGunSound();
     }
     protected double[] applyRecoil(double ddx, double ddy) {
         double maxRad = Math.toRadians(getRecoilAmount());
@@ -80,7 +76,6 @@ public abstract class Gun extends Weapon implements Cooldownable {
         double sin = Math.sin(angle);
         return new double[]{ ddx*cos - ddy*sin, ddx*sin + ddy*cos };
     }
-    public abstract void playGunSound();
     public void setMouseTarget(double mx, double my) {
         this.targetX = mx;
         this.targetY = my;

@@ -7,7 +7,6 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -79,7 +78,7 @@ public class MainGame extends Application {
         primaryStage.show();
 
         try {
-            playerImage = new Image(getClass().getResourceAsStream("/Images/player.png"));
+            playerImage = new Image(getClass().getResourceAsStream("/Images/Player/player.png"));
             itemImages.put("Pistol", new Image(getClass().getResourceAsStream("/Images/Gun/Pistol.png")));
             itemImages.put("MachineGun", new Image(getClass().getResourceAsStream("/Images/Gun/Machinegun.png")));
             itemImages.put("Shotgun", new Image(getClass().getResourceAsStream("/Images/Gun/Shotgun.png")));
@@ -184,7 +183,6 @@ public class MainGame extends Application {
         scene.setOnKeyPressed(e -> {
             if (e.getCode() == javafx.scene.input.KeyCode.ESCAPE ||
                     e.getCode() == javafx.scene.input.KeyCode.ENTER) {
-                unlockedStages = 1;
                 selectedStage  = 1;
                 showMainMenu();
             }
