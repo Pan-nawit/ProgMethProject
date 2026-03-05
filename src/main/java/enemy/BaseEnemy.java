@@ -52,8 +52,8 @@ public abstract class BaseEnemy implements Attackable {
 
         // เดินเข้าหาเมื่อยังไม่ชน (ระยะห่าง > 1)
         if (distance > 1) {
-            x += (diffX / distance) * speed;
-            y += (diffY / distance) * speed;
+            x += (diffX / distance) * speed/5;
+            y += (diffY / distance) * speed/5;
         }
     }
     protected boolean isCooldownReady() {
