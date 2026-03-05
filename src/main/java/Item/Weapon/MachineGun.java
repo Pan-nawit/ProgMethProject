@@ -11,7 +11,7 @@ public class MachineGun extends Gun {
     }
 
     @Override
-    public double getRecoilAmount() { return 0.5; }
+    public double getRecoilAmount() { return 10.0; }
 
     @Override
     public void shoot(Player player) {
@@ -21,7 +21,8 @@ public class MachineGun extends Gun {
         double len = Math.sqrt(ddx*ddx + ddy*ddy);
         if (len == 0) return;
         ddx /= len; ddy /= len;
-
+        double[] dir = applyRecoil(ddx, ddy); // ← เพิ่มบรรทัดนี้
+        ddx = dir[0]; ddy = dir[1];                   // ← และนี้
         GameLogic.addBullet(new Bullet((int)cx, (int)cy, ddx, ddy, 20, damage, name));
         player.addRecoil(getRecoilAmount());
         playGunSound();

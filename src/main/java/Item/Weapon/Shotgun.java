@@ -10,7 +10,7 @@ public class Shotgun extends Gun {
     }
 
     @Override
-    public double getRecoilAmount() { return 5.0; }
+    public double getRecoilAmount() { return 7.5; }
 
     @Override
     public void shoot(Player player) {
@@ -20,7 +20,8 @@ public class Shotgun extends Gun {
         double len = Math.sqrt(ddx*ddx + ddy*ddy);
         if (len == 0) return;
         ddx /= len; ddy /= len;
-
+        double[] dir = applyRecoil(ddx, ddy); // ← เพิ่มบรรทัดนี้
+        ddx = dir[0]; ddy = dir[1];                   // ← และนี้
         // perpendicular vector สำหรับ spread
         double perpX = -ddy;
         double perpY =  ddx;

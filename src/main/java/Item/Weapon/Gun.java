@@ -9,6 +9,7 @@ public abstract class Gun extends Weapon implements Cooldownable {
     protected long lastFiredTime = 0; // เวลาที่ยิงนัดล่าสุด
     protected long fireRate;
     protected double targetX, targetY;// ระยะห่างระหว่างนัด (Cooldown) เช่น 100ms, 500ms
+    private static final java.util.Random RNG = new java.util.Random();
     public Gun(String name,int amount,int damage,String imagePath, String soundPath,long fireRate){
         super(name, amount, damage,imagePath,soundPath);
         this.fireRate=fireRate;
@@ -46,6 +47,18 @@ public abstract class Gun extends Weapon implements Cooldownable {
         double ddx = targetX - cx;
         double ddy = targetY - cy;
 
+        double recoilSpread = player.getRecoil() / player.getMaxRecoil(); // 0.0–1.0
+        double maxAngle = getRecoilAmount() * 0.08; // ยิ่ง recoilAmount มาก ยิ่งกระจาย
+        double angleOffset = (RNG.nextDouble() * 2 - 1) * maxAngle * recoilSpread;
+
+        // หมุน direction vector ตาม angleOffset (radians)
+        double cos = Math.cos(angleOffset);
+        double sin = Math.sin(angleOffset);
+        double newDdx = ddx * cos - ddy * sin;
+        double newDdy = ddx * sin + ddy * cos;
+        ddx = newDdx;
+        ddy = newDdy;
+
         // normalize
         double len = Math.sqrt(ddx * ddx + ddy * ddy);
         if (len == 0) return;
@@ -59,6 +72,13 @@ public abstract class Gun extends Weapon implements Cooldownable {
         );
         GameLogic.addBullet(bullet);
         playGunSound();
+    }
+    protected double[] applyRecoil(double ddx, double ddy) {
+        double maxRad = Math.toRadians(getRecoilAmount());
+        double angle = (RNG.nextDouble() * 2.0 - 1.0) * maxRad;
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+        return new double[]{ ddx*cos - ddy*sin, ddx*sin + ddy*cos };
     }
     public abstract void playGunSound();
     public void setMouseTarget(double mx, double my) {
