@@ -1,32 +1,48 @@
 package Item.Bullet;
 
-import java.awt.*;
+import java.awt.Rectangle;
 
 public class Bullet {
-    private int x, y;
+    private float x, y;
+    private float dx, dy;
     private int speed;
     private int damage;
-    private float dirX, dirY;
-    private String type;
-    public Bullet(int x, int y, float dirX, float dirY, int speed, int damage, String type) {
+    private String ownerName;
+
+    /** Used by Gun subclasses — dx/dy as int direction vector */
+    public Bullet(int x, int y, int dx, int dy, int speed, int damage, String ownerName) {
         this.x = x;
         this.y = y;
-        this.dirX = dirX;
-        this.dirY = dirY;
+        this.dx = dx;
+        this.dy = dy;
         this.speed = speed;
         this.damage = damage;
-        this.type = type;
+        this.ownerName = ownerName;
     }
+
+    /** Used by simple char-direction code */
+    public Bullet(int x, int y, char direction, int damage) {
+        this.x = x;
+        this.y = y;
+        this.speed = 12;
+        this.damage = damage;
+        this.ownerName = "";
+        switch (Character.toLowerCase(direction)) {
+            case 'w' -> { this.dx =  0; this.dy = -1; }
+            case 's' -> { this.dx =  0; this.dy =  1; }
+            case 'a' -> { this.dx = -1; this.dy =  0; }
+            case 'd' -> { this.dx =  1; this.dy =  0; }
+        }
+    }
+
     public void update() {
-        x += dirX * speed;
-        y += dirY * speed;
+        x += dx * speed;
+        y += dy * speed;
     }
-    public Rectangle getBounds() {
-        return new Rectangle(x, y, 4, 4);
-    }
-    public int getDamage() { return damage; }
-    public String getType() { return type; }
-    public int getX() { return x; }
-    public int getY() { return y; }
+
+    public Rectangle getBounds() { return new Rectangle((int)x - 3, (int)y - 3, 6, 6); }
+    public int getX()        { return (int) x; }
+    public int getY()        { return (int) y; }
+    public int getDamage()   { return damage; }
+    public String getOwnerName() { return ownerName; }
 }
-// ตัวอย่าง: GamePanel.addBullet(bullet);
