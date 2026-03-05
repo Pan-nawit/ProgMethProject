@@ -200,5 +200,6 @@ public class Player {
     public float getMouseX() { return mouseX; }
     public float getMouseY() { return mouseY; }
     public void setMousePos(float x, float y) { this.mouseX = x; this.mouseY = y; }
-    public  double getMaxRecoil(){return maxRecoil;}
+    public double getMaxRecoil() { return maxRecoil; }
+
 }
