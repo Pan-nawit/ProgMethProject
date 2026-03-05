@@ -60,6 +60,7 @@ public class GameLogic {
         wave = 1;
         score = 0;
         player.setHp(5);
+        player.setSpeed(player.getDefaultSpeed());
 
         // Give player a starting pistol
         player.addItem(new Pistol());

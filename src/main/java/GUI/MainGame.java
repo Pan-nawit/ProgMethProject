@@ -69,6 +69,9 @@ public class MainGame extends Application {
     }
 
     public void startGame() {
+        if (gameLoop != null) {
+            gameLoop.stop();
+        }
         gameLogic = new GameLogic();
         gameLogic.initGame(selectedStage);
 
