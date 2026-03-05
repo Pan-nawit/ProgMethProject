@@ -143,14 +143,19 @@ public abstract class BaseEnemy implements Attackable {
     public void setAttackCooldown(long cooldown) {
         this.attackCooldown = cooldown;
     }
-    public int getMaxHp() {
-        return maxHp;
-    }
     public int getX(){
         return (int)x;
     }
     public int getY(){
         return (int)y;
+    }
+
+
+    public int getMaxHp() { return maxHp; }
+
+    /** Override in subclasses to change color. Default = red */
+    public javafx.scene.paint.Color getEnemyColor() {
+        return javafx.scene.paint.Color.web("#c0392b");
     }
 
 }

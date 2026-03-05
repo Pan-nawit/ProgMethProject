@@ -24,8 +24,8 @@ public class Player {
     private int selectedItemIndex = 0; // เพิ่มเพื่อระบุว่าเลือกไอเทมชิ้นไหนใน inventory
 
     public Player(){
-        this.x=0;
-        this.y=0;
+        this.x = 384;
+        this.y = 234; // center of 500px play area
         setHp(maxHp);
         setSpeed(defaultSpeed);
     }
@@ -41,7 +41,7 @@ public class Player {
             }
             case 's' -> {
                 y += currentSpeed;
-                if (y > 600 - height) y = 600 - height; // หักลบความสูงของ Player ด้วย
+                if (y > 500 - height) y = 500 - height; // play area height
             }
             case 'a' -> {
                 x -= currentSpeed;
@@ -170,4 +170,28 @@ public class Player {
     public char getLastFacing() {return lastFacing;}
     public List<Item> getInventory() { return inventory; }
     public List<Status> getStatusList() { return statusList; }
+
+    public void selectPrevItem() {
+        if (!inventory.isEmpty()) {
+            selectedItemIndex = (selectedItemIndex - 1 + inventory.size()) % inventory.size();
+        }
+    }
+
+    public void useSelectedConsumable() {
+        if (!inventory.isEmpty() && selectedItemIndex < inventory.size()) {
+            Item item = inventory.get(selectedItemIndex);
+            // only use if it's not a weapon (consumables)
+            if (!(item instanceof Weapon)) {
+                item.use(this);
+                if (item.isEmpty()) {
+                    inventory.remove(selectedItemIndex);
+                    if (selectedItemIndex >= inventory.size())
+                        selectedItemIndex = Math.max(0, inventory.size() - 1);
+                }
+            }
+        }
+    }
+
+    public int getSelectedItemIndex() { return selectedItemIndex; }
+
 }
