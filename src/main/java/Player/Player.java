@@ -98,8 +98,7 @@ public class Player {
     }
 
     public void addRecoil(double amount) {
-        double actual = amount * (0.5 + Math.random() * 0.5); // สุ่ม 50–100%
-        recoil += actual;
+        recoil += amount;
         if (recoil > maxRecoil) recoil = maxRecoil;
     }
     public void recoverRecoil() {
@@ -201,5 +200,4 @@ public class Player {
     public float getMouseX() { return mouseX; }
     public float getMouseY() { return mouseY; }
     public void setMousePos(float x, float y) { this.mouseX = x; this.mouseY = y; }
-    public double getMaxRecoil() { return maxRecoil; }
 }
