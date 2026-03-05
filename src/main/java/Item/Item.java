@@ -2,6 +2,7 @@ package Item;
 
 import Interface.Pickable;
 import Player.Player;
+import java.awt.Rectangle;
 
 import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;

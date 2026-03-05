@@ -89,10 +89,10 @@ public class GameLogic {
 
         // 4. ระบบไอเทมบนพื้น (เพิ่มเข้าไปเพื่อให้ Pickable ทำงาน)
         for (int i = 0; i < itemsOnGround.size(); i++) {
-            Item.Item item = itemsOnGround.get(i);
+            Item.Item itemoj = itemsOnGround.get(i);
             // เช็คว่า Player เดินชนไอเทมหรือไม่ (ต้องมี x, y ในคลาส Item)
-            if (player.getBounds().intersects(item.getBounds())) {
-                item.onPickUp(player);
+            if (player.getBounds().intersects(itemoj.getBounds())) {
+                itemoj.onPickUp(player);
                 itemsOnGround.remove(i);
                 i--;
             }

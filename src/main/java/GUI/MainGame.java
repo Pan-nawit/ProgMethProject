@@ -11,7 +11,7 @@ import javafx.stage.Stage;
 public class MainGame extends Application {
 
     private GameLogic gameLogic;
-    private boolean w, a, s, d; // ปุ่มกด
+    private boolean w, a, s, d, isMousePressed; // ปุ่มกด
 
     @Override
     public void start(Stage primaryStage) {
@@ -56,7 +56,7 @@ public class MainGame extends Application {
             @Override
             public void handle(long now) {
                 // ส่งค่าปุ่มกดไปให้ Logic คำนวณ
-                gameLogic.update(w, a, s, d);
+                gameLogic.update(w, a, s, d, isMousePressed);
 
                 // เคลียร์หน้าจอเก่า
                 GraphicsContext gc = canvas.getGraphicsContext2D();
@@ -68,6 +68,17 @@ public class MainGame extends Application {
                 drawGame(gc, gameLogic);
             }
         };
+        // สำหรับเช็คว่ากดเมาส์ลง (Start Press)
+        scene.setOnMousePressed(e -> {
+            if (e.isPrimaryButtonDown()) { // เช็คว่าเป็นคลิกซ้าย
+                isMousePressed = true;
+            }
+        });
+
+// สำหรับเช็คว่าปล่อยเมาส์ (Release)
+        scene.setOnMouseReleased(e -> {
+            isMousePressed = false;
+        });
         timer.start();
     }
 

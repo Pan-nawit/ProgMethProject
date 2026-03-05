@@ -35,10 +35,22 @@ public class Player {
         direction = Character.toLowerCase(direction);
         this.lastFacing=direction;
         switch (direction) {
-            case 'w' -> y -= currentSpeed; // เดินขึ้น
-            case 's' -> y += currentSpeed; // เดินลง
-            case 'a' -> x -= currentSpeed; // เดินซ้าย
-            case 'd' -> x += currentSpeed; // เดินขวา
+            case 'w' -> {
+                y -= currentSpeed;
+                if (y < 0) y = 0; // ถ้าเกินขอบบน ให้ล็อกไว้ที่ 0
+            }
+            case 's' -> {
+                y += currentSpeed;
+                if (y > 600 - height) y = 600 - height; // หักลบความสูงของ Player ด้วย
+            }
+            case 'a' -> {
+                x -= currentSpeed;
+                if (x < 0) x = 0; // ถ้าเกินขอบซ้าย ให้ล็อกไว้ที่ 0
+            }
+            case 'd' -> {
+                x += currentSpeed;
+                if (x > 800 - width) x = 800 - width; // หักลบความกว้างของ Player ด้วย
+            }
         }
     }
     // ดึงอาวุธที่กำลังถืออยู่ (สมมติว่าเป็นไอเทมที่เลือกอยู่ใน index ปัจจุบัน)
