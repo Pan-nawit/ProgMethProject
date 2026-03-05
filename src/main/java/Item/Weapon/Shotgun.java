@@ -5,40 +5,30 @@ import Item.Bullet.Bullet;
 import Player.Player;
 
 public class Shotgun extends Gun {
-    public Shotgun() {
-        super("Shotgun", 2, 3, "", "", 3000);
-    }
+    public Shotgun() { super("Shotgun", 2, 3, "", "", 3000); }
 
-    @Override
-    public double getRecoilAmount() { return 5.0; }
+    @Override public double getRecoilAmount() { return 5.0; }
 
     @Override
     public void shoot(Player player) {
-        int dx = 0, dy = 0;
-        switch (player.getLastFacing()) {
-            case 'w' -> dy = -1;
-            case 's' -> dy =  1;
-            case 'a' -> dx = -1;
-            case 'd' -> dx =  1;
-        }
-        int spawnX = player.getX() + player.getWidth()  / 2;
-        int spawnY = player.getY() + player.getHeight() / 2;
-        int spreadX = (dx == 0) ? 1 : 0;
-        int spreadY = (dy == 0) ? 1 : 0;
-
-        Bullet b1 = new Bullet(spawnX, spawnY, dx,           dy,           15, damage, name);
-        Bullet b2 = new Bullet(spawnX, spawnY, dx - spreadX, dy - spreadY, 15, damage, name);
-        Bullet b3 = new Bullet(spawnX, spawnY, dx + spreadX, dy + spreadY, 15, damage, name);
-
-        GameLogic.addBullet(b1);
-        GameLogic.addBullet(b2);
-        GameLogic.addBullet(b3);
-
+        float cx = player.getX() + player.getWidth()  / 2f;
+        float cy = player.getY() + player.getHeight() / 2f;
+        float dx = player.getMouseX() - cx;
+        float dy = player.getMouseY() - cy;
+        // 3 pellets with spread perpendicular to aim direction
+        float len = (float) Math.sqrt(dx * dx + dy * dy);
+        float nx = len > 0 ? dx / len : 1; // normalized
+        float ny = len > 0 ? dy / len : 0;
+        float px = -ny; // perpendicular axis
+        float py =  nx;
+        float sp = 0.3f; // spread amount
+        GameLogic.addBullet(new Bullet(cx, cy, nx,        ny,        15, damage, name));
+        GameLogic.addBullet(new Bullet(cx, cy, nx - px*sp, ny - py*sp, 15, damage, name));
+        GameLogic.addBullet(new Bullet(cx, cy, nx + px*sp, ny + py*sp, 15, damage, name));
         player.applyKnockback(5);
         player.addRecoil(getRecoilAmount());
         playGunSound();
     }
 
-    @Override
-    public void playGunSound() { playSound(); }
+    @Override public void playGunSound() { playSound(); }
 }

@@ -4,23 +4,30 @@ import java.awt.Rectangle;
 
 public class Bullet {
     private float x, y;
-    private float dx, dy;
+    private float dx, dy;   // normalized direction
     private int speed;
     private int damage;
     private String ownerName;
 
-    /** Used by Gun subclasses — dx/dy as int direction vector */
-    public Bullet(int x, int y, int dx, int dy, int speed, int damage, String ownerName) {
+    /** Cursor-aimed constructor — takes exact dx/dy float direction */
+    public Bullet(float x, float y, float dx, float dy, int speed, int damage, String ownerName) {
         this.x = x;
         this.y = y;
-        this.dx = dx;
-        this.dy = dy;
+        // normalize
+        float len = (float) Math.sqrt(dx * dx + dy * dy);
+        this.dx = len > 0 ? dx / len : 0;
+        this.dy = len > 0 ? dy / len : 0;
         this.speed = speed;
         this.damage = damage;
         this.ownerName = ownerName;
     }
 
-    /** Used by simple char-direction code */
+    /** Legacy int-vector constructor (Gun base class default shoot) */
+    public Bullet(int x, int y, int dx, int dy, int speed, int damage, String ownerName) {
+        this((float)x, (float)y, (float)dx, (float)dy, speed, damage, ownerName);
+    }
+
+    /** Legacy char-direction constructor */
     public Bullet(int x, int y, char direction, int damage) {
         this.x = x;
         this.y = y;
@@ -41,8 +48,8 @@ public class Bullet {
     }
 
     public Rectangle getBounds() { return new Rectangle((int)x - 3, (int)y - 3, 6, 6); }
-    public int getX()        { return (int) x; }
-    public int getY()        { return (int) y; }
-    public int getDamage()   { return damage; }
+    public int getX()            { return (int) x; }
+    public int getY()            { return (int) y; }
+    public int getDamage()       { return damage; }
     public String getOwnerName() { return ownerName; }
 }

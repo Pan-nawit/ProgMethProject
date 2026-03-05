@@ -21,6 +21,7 @@ public class MainGame extends Application {
 
     private GameLogic gameLogic;
     private boolean w, a, s, d, isMousePressed;
+    private double mouseScreenX = 0, mouseScreenY = 0;
     private AnimationTimer gameLoop;
     private Stage primaryStage;
 
@@ -32,7 +33,7 @@ public class MainGame extends Application {
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
-        primaryStage.setTitle("Zombie Survival");
+        primaryStage.setTitle("Zombal Survivie");
         primaryStage.setResizable(false);
         showMainMenu();
         primaryStage.show();
@@ -90,12 +91,24 @@ public class MainGame extends Application {
         });
         scene.setOnMousePressed(e -> { if (e.isPrimaryButtonDown()) isMousePressed = true; });
         scene.setOnMouseReleased(e -> isMousePressed = false);
+        scene.setOnMouseMoved(e -> {
+            mouseScreenX = e.getX();
+            mouseScreenY = e.getY();
+        });
+        scene.setOnMouseDragged(e -> {
+            mouseScreenX = e.getX();
+            mouseScreenY = e.getY();
+        });
 
         primaryStage.setScene(scene);
 
         gameLoop = new AnimationTimer() {
             @Override
             public void handle(long now) {
+                // Convert screen Y to logical coords (subtract HUD offset)
+                float logicalMouseX = (float) mouseScreenX;
+                float logicalMouseY = (float)(mouseScreenY - HUD_HEIGHT);
+                gameLogic.player.setMousePos(logicalMouseX, logicalMouseY);
                 gameLogic.update(w, a, s, d, isMousePressed);
                 GraphicsContext gc = canvas.getGraphicsContext2D();
                 gc.clearRect(0, 0, 800, 600);
@@ -298,6 +311,20 @@ public class MainGame extends Application {
 
         // ── ITEM BAR (bottom) ────────────────────────
         drawItemBar(gc, logic);
+
+        // ── CROSSHAIR ────────────────────────────────
+        if (!logic.isGameOver && !logic.isWon) {
+            double mx = mouseScreenX;
+            double my = mouseScreenY;
+            int cs = 10; // crosshair size
+            gc.setStroke(Color.WHITE);
+            gc.setLineWidth(1.5);
+            gc.strokeLine(mx - cs, my, mx + cs, my);
+            gc.strokeLine(mx, my - cs, mx, my + cs);
+            gc.setStroke(Color.web("#e94560", 0.6));
+            gc.setLineWidth(1);
+            gc.strokeOval(mx - 5, my - 5, 10, 10);
+        }
 
         // ── OVERLAYS ────────────────────────────────
         if (logic.isGameOver) {
