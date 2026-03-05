@@ -3,7 +3,10 @@ package GameLogic;
 import Item.Bullet.Bullet;
 import Item.HealingItem.Medkit;
 import Item.HealingItem.Bandage;
-import Item.Weapon.*;
+import Item.Weapon.MachineGun;
+import Item.Weapon.Pistol;
+import Item.Weapon.Shotgun;
+import Item.Weapon.Weapon;
 import Player.Player;
 import enemy.BaseEnemy;
 import enemy.*;
@@ -20,74 +23,91 @@ public class GameLogic {
     public List<Item.Item> itemsOnGround;
 
     public boolean isGameOver = false;
-    public boolean isWon = false;
-    public int wave = 1;
+    public boolean isWon      = false;
+    public int wave  = 1;
     public int score = 0;
 
-    private int currentStage = 1;
-    private int stageDurationSeconds = 30;
-    private long stageStartTime = 0;
+    /** Seconds frozen at the moment of game-over or win — use this for overlay display. */
+    public double finalElapsedSeconds = 0;
 
-    private long lastSpawnTime = 0;
-    private long spawnCooldown = 2000;
+    /**
+     * Stage 4 = ENDLESS SURVIVAL.
+     * Timer counts UP, no win condition — game ends only on death.
+     * On death the overlay shows "survived xx:xx" as a green clear screen.
+     */
+    public boolean isEndless = false;
+
+    private int  currentStage          = 1;
+    private int  stageDurationSeconds  = 30;
+    private long stageStartTime        = 0;
+
+    private long lastSpawnTime    = 0;
+    private long spawnCooldown    = 2000;
     private long lastItemDropTime = 0;
-    private long itemDropCooldown = 8000; // drop item every 8s
-    private Random random = new Random();
+    // Endless drops items more frequently (4 s base vs 8 s for timed stages)
+    private long itemDropCooldown = 8000;
+    private final Random random = new Random();
 
-    private int screenWidth = 800;
-    private int screenHeight = 500; // 600 - 52 HUD - 48 item bar
+    private final int screenWidth  = 800;
+    private final int screenHeight = 500;
 
-    public GameLogic() { initGame(1); }
+    public GameLogic()             { initGame(1); }
+    public void initGame()         { initGame(1); }
 
     public void initGame(int stage) {
-        currentStage = stage;
-        stageDurationSeconds = stage * 30;
+        currentStage      = stage;
+        isEndless         = (stage == 4);
+        stageDurationSeconds = stage * 30;   // irrelevant for endless
+
         spawnCooldown = switch (stage) {
             case 1 -> 2000;
             case 2 -> 1200;
             case 3 -> 700;
+            case 4 -> 700;   // starts at stage-3 speed, keeps ramping
             default -> 2000;
         };
 
-        player = new Player();
-        enemies = new ArrayList<>();
-        bullets = new ArrayList<>();
-        itemsOnGround = new ArrayList<>();
-        isGameOver = false;
-        isWon = false;
-        wave = 1;
-        score = 0;
-        player.setHp(5);
-        player.setSpeed(player.getDefaultSpeed());
+        // Endless drops items twice as often as stage 3
+        itemDropCooldown = isEndless ? 4000 : 8000;
 
-        // Give player a starting pistol
+        player        = new Player();
+        enemies       = new ArrayList<>();
+        bullets       = new ArrayList<>();
+        itemsOnGround = new ArrayList<>();
+        isGameOver    = false;
+        isWon         = false;
+        wave          = 1;
+        score         = 0;
+        finalElapsedSeconds = 0;
+        player.setHp(5);
         player.addItem(new Pistol());
 
-        stageStartTime = System.currentTimeMillis();
-        lastSpawnTime = stageStartTime;
-        lastItemDropTime = stageStartTime;
+        stageStartTime    = System.currentTimeMillis();
+        lastSpawnTime     = stageStartTime;
+        lastItemDropTime  = stageStartTime;
     }
-
-    public void initGame() { initGame(1); }
 
     public static void addBullet(Bullet b) {
         if (bullets != null) bullets.add(b);
     }
 
+    /** Seconds elapsed since stage start (always positive, used as count-up for endless). */
     public double getElapsedSeconds() {
         return (System.currentTimeMillis() - stageStartTime) / 1000.0;
     }
 
-    public void update(boolean w, boolean a, boolean s, boolean d, boolean isMousePressed, double mouseX, double mouseY) {
+    public void update(boolean w, boolean a, boolean s, boolean d, boolean isMousePressed) {
         if (isGameOver || isWon) return;
 
-        if (getElapsedSeconds() >= stageDurationSeconds) {
+        // Timed stages: win when time runs out
+        if (!isEndless && getElapsedSeconds() >= stageDurationSeconds) {
+            finalElapsedSeconds = getElapsedSeconds();
             isWon = true;
             player.getStatusList().forEach(st -> player.removeStatus(st.getName()));
             return;
         }
 
-        wave = (int) (getElapsedSeconds() / 10) + 1;
+        wave = (int)(getElapsedSeconds() / 10) + 1;
 
         if (w) player.move('w');
         if (s) player.move('s');
@@ -97,17 +117,17 @@ public class GameLogic {
 
         if (isMousePressed) {
             Weapon currentWeapon = player.getEquippedWeapon();
-            if (currentWeapon instanceof Gun gun) {  // cast + check ในบรรทัดเดียว (Java 16+)
-                gun.setMouseTarget(mouseX, mouseY);
-                gun.use(player);
-                if (gun.isEmpty()) player.removeItem(gun);
+            if (currentWeapon != null) {
+                currentWeapon.use(player);
+                if (currentWeapon.isEmpty()) player.removeItem(currentWeapon);
             }
         }
 
         for (int i = 0; i < bullets.size(); i++) {
             Bullet b = bullets.get(i);
             b.update();
-            if (b.getX() < 0 || b.getX() > screenWidth || b.getY() < 0 || b.getY() > screenHeight) {
+            if (b.getX() < 0 || b.getX() > screenWidth ||
+                    b.getY() < 0 || b.getY() > screenHeight) {
                 bullets.remove(i--);
             }
         }
@@ -129,12 +149,14 @@ public class GameLogic {
             checkBulletHit(e);
             if (e.isDead()) {
                 enemies.remove(i--);
-                score += 10 * currentStage;
+                score += 10 * (isEndless ? 4 : currentStage);
             }
         }
 
         if (player.getHp() <= 0) {
+            finalElapsedSeconds = getElapsedSeconds();
             isGameOver = true;
+            // For endless: isGameOver = true, but the overlay shows the "survived" time
             player.getStatusList().forEach(st -> player.removeStatus(st.getName()));
         }
     }
@@ -154,64 +176,76 @@ public class GameLogic {
 
     private void handleSpawning() {
         long now = System.currentTimeMillis();
-        if (now - lastSpawnTime > spawnCooldown) {
-            int cx = screenWidth / 2;
-            int cy = screenHeight / 2;
-            int spread = 200;
-            int sx = Math.max(0, Math.min(cx + random.nextInt(spread * 2) - spread, screenWidth - 32));
-            int sy = Math.max(0, Math.min(cy + random.nextInt(spread * 2) - spread, screenHeight - 32));
+        if (now - lastSpawnTime <= spawnCooldown) return;
 
-            int roll = random.nextInt(100);
-            BaseEnemy spawned;
-            if (currentStage == 1) {
-                // Stage 1: basic zombie (hp1 spd1 dmg1) + runner (hp1 spd2 dmg1)
-                spawned = roll < 35 ? new Runners(sx, sy) : new zombie(sx, sy);
-            } else if (currentStage == 2) {
-                // Stage 2: adds juggernaut, bleed, slow
-                if      (roll < 15) spawned = new juggernaut(sx, sy);
-                else if (roll < 35) spawned = new Runners(sx, sy);
-                else if (roll < 55) spawned = new AnimalZombies(sx, sy);
-                else if (roll < 70) spawned = new SlowZombie(sx, sy);
-                else                spawned = new zombie(sx, sy);
-            } else {
-                // Stage 3: all types including damage-2 and screamers
-                if      (roll < 12) spawned = new juggernaut(sx, sy);
-                else if (roll < 27) spawned = new Screamers(sx, sy);
-                else if (roll < 44) spawned = new Runners(sx, sy);
-                else if (roll < 60) spawned = new AnimalZombies(sx, sy);
-                else if (roll < 75) spawned = new SlowZombie(sx, sy);
-                else if (roll < 88) spawned = new HeavyZombie(sx, sy);
-                else                spawned = new zombie(sx, sy);
-            }
-            enemies.add(spawned);
-            lastSpawnTime = now;
+        int cx = screenWidth  / 2;
+        int cy = screenHeight / 2;
+        int spread = 200;
+        int sx = Math.max(0, Math.min(cx + random.nextInt(spread * 2) - spread, screenWidth  - 32));
+        int sy = Math.max(0, Math.min(cy + random.nextInt(spread * 2) - spread, screenHeight - 32));
 
-            long minCD = switch (currentStage) { case 1 -> 800; case 2 -> 500; default -> 300; };
-            if (spawnCooldown > minCD) spawnCooldown -= 5;
+        int roll = random.nextInt(100);
+        BaseEnemy spawned;
+
+        if (currentStage == 1) {
+            spawned = roll < 35 ? new Runners(sx, sy) : new zombie(sx, sy);
+        } else if (currentStage == 2) {
+            if      (roll < 15) spawned = new juggernaut(sx, sy);
+            else if (roll < 35) spawned = new Runners(sx, sy);
+            else if (roll < 55) spawned = new AnimalZombies(sx, sy);
+            else if (roll < 70) spawned = new SlowZombie(sx, sy);
+            else                spawned = new zombie(sx, sy);
+        } else {
+            // Stage 3 AND Endless (stage 4) — full roster
+            if      (roll < 12) spawned = new juggernaut(sx, sy);
+            else if (roll < 27) spawned = new Screamers(sx, sy);
+            else if (roll < 44) spawned = new Runners(sx, sy);
+            else if (roll < 60) spawned = new AnimalZombies(sx, sy);
+            else if (roll < 75) spawned = new SlowZombie(sx, sy);
+            else if (roll < 88) spawned = new HeavyZombie(sx, sy);
+            else                spawned = new zombie(sx, sy);
         }
+
+        enemies.add(spawned);
+        lastSpawnTime = now;
+
+        long minCD = switch (currentStage) {
+            case 1 -> 800; case 2 -> 500; default -> 300;
+        };
+        if (spawnCooldown > minCD) spawnCooldown -= 5;
     }
 
     private void handleItemDrops() {
         long now = System.currentTimeMillis();
-        if (now - lastItemDropTime > itemDropCooldown) {
-            int ix = random.nextInt(screenWidth - 20);
-            int iy = random.nextInt(screenHeight - 20);
-            int roll = random.nextInt(100);
-            Item.Item drop;
-            if      (roll < 20) drop = new Medkit();
-            else if (roll < 40) drop = new Bandage();
-            else if (roll < 60) drop = new Pistol();
-            else if (roll < 80) drop = new Shotgun();
+        if (now - lastItemDropTime <= itemDropCooldown) return;
+
+        int ix = random.nextInt(screenWidth  - 20);
+        int iy = random.nextInt(screenHeight - 20);
+        int roll = random.nextInt(100);
+
+        Item.Item drop;
+        if (isEndless) {
+            // Endless: more healing + shotgun appears
+            if      (roll < 22) drop = new Medkit();
+            else if (roll < 44) drop = new Bandage();
+            else if (roll < 58) drop = new Pistol();
+            else if (roll < 72) drop = new MachineGun();
+            else if (roll < 86) drop = new Shotgun();
+            else                drop = new Medkit();   // extra heal at high roll
+        } else {
+            if      (roll < 25) drop = new Medkit();
+            else if (roll < 50) drop = new Bandage();
+            else if (roll < 75) drop = new Pistol();
             else                drop = new MachineGun();
-            drop.setX(ix);
-            drop.setY(iy);
-            itemsOnGround.add(drop);
-            lastItemDropTime = now;
         }
+
+        drop.setX(ix);
+        drop.setY(iy);
+        itemsOnGround.add(drop);
+        lastItemDropTime = now;
     }
 
     public void draw(Graphics2D g) {
-        // legacy swing draw — not used in JavaFX path
         g.setColor(java.awt.Color.BLUE);
         g.fillRect(player.getX(), player.getY(), player.getWidth(), player.getHeight());
         for (BaseEnemy e : enemies) e.draw(g);
