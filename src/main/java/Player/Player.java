@@ -9,7 +9,7 @@ public class Player {
     private int hp;
     private int speed;
     private int maxHp = 5;
-    private int defaultSpeed = 10;
+    private int defaultSpeed = 3;
 
     private int x, y;
     private int width = 32;  // ความกว้างของตัวละคร
@@ -200,5 +200,4 @@ public class Player {
     public float getMouseX() { return mouseX; }
     public float getMouseY() { return mouseY; }
     public void setMousePos(float x, float y) { this.mouseX = x; this.mouseY = y; }
-
 }

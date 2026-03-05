@@ -8,6 +8,7 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
@@ -38,7 +39,7 @@ public class MainGame extends Application {
     public static final int[] STAGE_DURATIONS = {30, 60, 90};
 
     // ── Palette ──────────────────────────────────────
-    private static final String C_BG       = "#1b1a17";  // dark dirt
+    private static final String C_BG       = "#1b1a17";
     private static final String C_TILE_A   = "#1f1e1b";
     private static final String C_TILE_B   = "#222018";
     private static final String C_HUD_BG   = "#0e0d0b";
@@ -51,13 +52,31 @@ public class MainGame extends Application {
     private static final String C_TEXT     = "#d4cfc4";
     private static final String C_MUTED    = "#6b6560";
 
+    // ── Image & Font ──────────────────────────────────
+    private Image playerImage;
+    private Font pixelFont;
+
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
         primaryStage.setTitle("Zombal Survivie");
         primaryStage.setResizable(false);
+
+        // Load font
+        try {
+            Font.loadFont(getClass().getResourceAsStream("/PressStart2P.ttf"), 10);
+        } catch (Exception e) {
+            System.err.println("❌ ไม่สามารถโหลดฟอนต์ PressStart2P.ttf ได้: " + e.getMessage());
+        }
+
         showMainMenu();
         primaryStage.show();
+
+        try {
+            playerImage = new Image(getClass().getResourceAsStream("/player.png"));
+        } catch (Exception e) {
+            System.err.println("❌ ไม่สามารถโหลดภาพ player.png ได้: " + e.getMessage());
+        }
     }
 
     // ── Screens ──────────────────────────────────────
@@ -69,13 +88,16 @@ public class MainGame extends Application {
     }
 
     public void startGame() {
+        if (gameLoop != null) {
+            gameLoop.stop();
+        }
         gameLogic = new GameLogic();
         gameLogic.initGame(selectedStage);
 
         Canvas canvas = new Canvas(W, H);
         StackPane root = new StackPane(canvas);
         Scene scene = new Scene(root);
-        scene.setCursor(javafx.scene.Cursor.NONE); // hide OS cursor; we draw our own
+        scene.setCursor(javafx.scene.Cursor.NONE); // hide OS cursor
 
         scene.setOnKeyPressed(e -> {
             switch (e.getCode()) {
@@ -84,10 +106,15 @@ public class MainGame extends Application {
                 case S -> s = true;
                 case D -> d = true;
                 case R -> {
+                    // R is ONLY for restarting when dead now
                     if (gameLogic.isGameOver) { startGame(); }
-                    else if (gameLogic.isWon) {
-                        if (selectedStage == 3) { showCredits(); }
-                        else {
+                }
+                case ENTER -> {
+                    // ENTER is used to proceed when you survive
+                    if (gameLogic.isWon) {
+                        if (selectedStage == 3) {
+                            showCredits();
+                        } else {
                             if (selectedStage + 1 > unlockedStages) unlockedStages = selectedStage + 1;
                             selectedStage++;
                             startGame();
@@ -133,10 +160,12 @@ public class MainGame extends Application {
         StackPane root = new StackPane(canvas);
         Scene scene = new Scene(root);
         GraphicsContext gc = canvas.getGraphicsContext2D();
+
         drawCredits(gc);
+
         scene.setOnKeyPressed(e -> {
             if (e.getCode() == javafx.scene.input.KeyCode.ESCAPE ||
-                    e.getCode() == javafx.scene.input.KeyCode.R) {
+                    e.getCode() == javafx.scene.input.KeyCode.ENTER) {
                 unlockedStages = 1;
                 selectedStage  = 1;
                 showMainMenu();
@@ -160,11 +189,9 @@ public class MainGame extends Application {
     // ── Arena (tiled floor + border) ──────────────────
 
     private void drawArena(GraphicsContext gc) {
-        // Fill full canvas first
         gc.setFill(Color.web(C_HUD_BG));
         gc.fillRect(0, 0, W, H);
 
-        // Checkerboard tile floor in play area
         int tileSize = 40;
         for (int row = 0; row * tileSize < PLAY_H + tileSize; row++) {
             for (int col = 0; col * tileSize < W; col++) {
@@ -176,7 +203,6 @@ public class MainGame extends Application {
             }
         }
 
-        // Subtle grid lines
         gc.setStroke(Color.web("#2a2925", 0.6));
         gc.setLineWidth(0.5);
         for (int x = 0; x <= W; x += tileSize)
@@ -184,7 +210,6 @@ public class MainGame extends Application {
         for (int y = 0; y <= PLAY_H; y += tileSize)
             gc.strokeLine(0, HUD_HEIGHT + y, W, HUD_HEIGHT + y);
 
-        // Border glow inside play area
         gc.setStroke(Color.web(C_RED, 0.25));
         gc.setLineWidth(2);
         gc.strokeRect(1, HUD_HEIGHT + 1, W - 2, PLAY_H - 2);
@@ -193,23 +218,29 @@ public class MainGame extends Application {
     // ── Entities ──────────────────────────────────────
 
     private void drawEntities(GraphicsContext gc, GameLogic logic) {
-        // Items on ground — glowing pickup boxes
+        // Items on ground
         for (var item : logic.itemsOnGround) {
             int ix = item.getX();
             int iy = item.getY() + HUD_HEIGHT;
-            gc.setFill(Color.web(C_GOLD, 0.18));
-            gc.fillRoundRect(ix - 2, iy - 2, 20, 20, 5, 5);
+
+            // Outer glow / hit box
+            gc.setFill(Color.web(C_GOLD, 0.25));
+            gc.fillRoundRect(ix - 3, iy - 3, 26, 26, 6, 6);
+
+            // Colored item block
             gc.setFill(getItemColor(item.getName()));
-            gc.fillRoundRect(ix, iy, 16, 16, 4, 4);
-            gc.setStroke(Color.web(C_GOLD, 0.7));
-            gc.setLineWidth(1);
-            gc.strokeRoundRect(ix, iy, 16, 16, 4, 4);
-            gc.setFill(Color.web(C_HUD_BG));
-            gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 8));
-            gc.fillText(item.getName().substring(0, Math.min(3, item.getName().length())), ix + 1, iy + 11);
+            gc.fillRoundRect(ix, iy, 20, 20, 4, 4);
+            gc.setStroke(Color.web(C_GOLD, 0.8));
+            gc.setLineWidth(1.5);
+            gc.strokeRoundRect(ix, iy, 20, 20, 4, 4);
+
+            // Item text (White for better contrast)
+            gc.setFill(Color.WHITE);
+            gc.setFont(Font.font("Press Start 2P", FontWeight.BOLD, 6));
+            gc.fillText(item.getName().substring(0, Math.min(3, item.getName().length())).toUpperCase(), ix + 2, iy + 13);
         }
 
-        // Bullets — bright yellow with trail feel
+        // Bullets
         for (var b : logic.bullets) {
             int bx = b.getX();
             int by = b.getY() + HUD_HEIGHT;
@@ -226,19 +257,15 @@ public class MainGame extends Application {
             int ew = enemy.getWidth();
             int eh = enemy.getHeight();
 
-            // Shadow under enemy
             gc.setFill(Color.web("#000000", 0.35));
             gc.fillOval(ex + 2, ey + eh - 4, ew - 4, 8);
 
-            // Body
             gc.setFill(enemy.getEnemyColor());
             gc.fillRoundRect(ex, ey, ew, eh, 4, 4);
-            // Dark outline
             gc.setStroke(Color.web("#000000", 0.6));
             gc.setLineWidth(1.5);
             gc.strokeRoundRect(ex, ey, ew, eh, 4, 4);
 
-            // HP bar (above enemy)
             double hpPct = (double) enemy.getHP() / Math.max(enemy.getMaxHp(), 1);
             gc.setFill(Color.web("#000000", 0.7));
             gc.fillRoundRect(ex, ey - 9, ew, 5, 2, 2);
@@ -249,7 +276,7 @@ public class MainGame extends Application {
             gc.fillRoundRect(ex, ey - 9, (int)(ew * hpPct), 5, 2, 2);
         }
 
-        // Player — blue character with shadow
+        // Player
         int px = logic.player.getX();
         int py = logic.player.getY() + HUD_HEIGHT;
         int pw = logic.player.getWidth();
@@ -258,15 +285,14 @@ public class MainGame extends Application {
         gc.setFill(Color.web("#000000", 0.4));
         gc.fillOval(px + 3, py + ph - 4, pw - 6, 8);
 
-        gc.setFill(Color.web("#2980b9"));
-        gc.fillRoundRect(px, py, pw, ph, 5, 5);
-        gc.setFill(Color.web("#3498db", 0.5));
-        gc.fillRoundRect(px + 4, py + 4, pw - 8, 8, 3, 3); // highlight
-        gc.setStroke(Color.web("#5dade2"));
-        gc.setLineWidth(2);
-        gc.strokeRoundRect(px, py, pw, ph, 5, 5);
+        if (playerImage != null) {
+            gc.drawImage(playerImage, px, py);
+        } else {
+            gc.setFill(Color.web("#2980b9"));
+            gc.fillRoundRect(px, py, pw, ph, 5, 5);
+        }
 
-        // Aim line from player to cursor (thin, subtle)
+        // Aim line
         if (!logic.isGameOver && !logic.isWon) {
             float lmx = logic.player.getMouseX();
             float lmy = logic.player.getMouseY();
@@ -288,7 +314,6 @@ public class MainGame extends Application {
         int remaining = Math.max(0, stageDuration - (int) logic.getElapsedSeconds());
         boolean urgent = remaining <= 10;
 
-        // HUD background — dark panel with bottom border
         gc.setFill(Color.web(C_HUD_BG));
         gc.fillRect(0, 0, W, HUD_HEIGHT);
         gc.setStroke(Color.web(C_RED, 0.5));
@@ -298,60 +323,70 @@ public class MainGame extends Application {
         // ── Left: HP hearts ──
         int maxHp = 5;
         int curHp = logic.player.getHp();
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 11));
+        gc.setFont(Font.font("Press Start 2P", FontWeight.BOLD, 10));
         gc.setFill(Color.web(C_MUTED));
         gc.fillText("HP", 14, 20);
         for (int i = 0; i < maxHp; i++) {
             boolean filled = i < curHp;
-            gc.setFill(filled ? Color.web(C_RED_LT) : Color.web("#3a2a2a"));
-            gc.setFont(Font.font("Arial", 18));
-            gc.fillText(filled ? "♥" : "♡", 14 + i * 22, 44);
+            drawHeart(gc, 14 + (i * 26), 28, filled);
         }
 
         // ── Left-ish: Status effects ──
-        int statusX = 130;
+        int statusX = 150;
         for (var status : logic.player.getStatusList()) {
             String label = status.getName().equals("Bleeding") ? "🩸" : "🦵";
             gc.setFill(Color.web(C_RED, 0.8));
-            gc.fillRoundRect(statusX, 8, 60, 18, 5, 5);
+            gc.fillRoundRect(statusX, 12, 105, 18, 5, 5); // Widened to 105 to prevent cutoff!
             gc.setFill(Color.WHITE);
-            gc.setFont(Font.font("Monospaced", 10));
-            gc.fillText(label + " " + status.getName().substring(0, 4), statusX + 4, 20);
-            statusX += 66;
+            gc.setFont(Font.font("Press Start 2P", 8)); // Slightly smaller font to guarantee fit
+            gc.fillText(label + " " + status.getName(), statusX + 4, 25); // Using full name now!
+            statusX += 115;
         }
 
         // ── Center: Timer ──
         gc.setTextAlign(TextAlignment.CENTER);
-        // Stage label tiny above
         gc.setFill(Color.web(C_MUTED));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 10));
-        gc.fillText("STAGE " + selectedStage + "  ·  " + getDifficultyLabel(), 400, 13);
-        // Big timer
-        gc.setFill(urgent ? Color.web(C_RED_LT) : Color.web(C_TEXT));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 30));
-        gc.fillText(formatTime(remaining), 400, 46);
+        gc.setFont(Font.font("Press Start 2P", FontWeight.BOLD, 10));
+        gc.fillText("STAGE " + selectedStage + "  ·  " + getDifficultyLabel(), 400, 18);
 
-        // Timer progress bar — thin strip under timer text
+        gc.setFill(urgent ? Color.web(C_RED_LT) : Color.web(C_TEXT));
+        gc.setFont(Font.font("Press Start 2P", FontWeight.BOLD, 22));
+        gc.fillText(formatTime(remaining), 400, 43);
+
         double timerPct = (double) remaining / stageDuration;
-        int barW = 160;
+        int barW = 140;
         gc.setFill(Color.web("#2a2925"));
         gc.fillRoundRect(400 - barW / 2.0, HUD_HEIGHT - 6, barW, 4, 2, 2);
         gc.setFill(urgent ? Color.web(C_RED_LT) : Color.web(C_GREEN_LT));
         gc.fillRoundRect(400 - barW / 2.0, HUD_HEIGHT - 6, (int)(barW * timerPct), 4, 2, 2);
 
-        gc.setTextAlign(TextAlignment.LEFT);
-
         // ── Right: Score + Wave ──
         gc.setTextAlign(TextAlignment.RIGHT);
-        // Score with coin icon
         gc.setFill(Color.web(C_GOLD));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 20));
-        gc.fillText("⬡ " + logic.score, W - 14, 30);
-        // Wave
+        gc.setFont(Font.font("Press Start 2P", FontWeight.BOLD, 18));
+        gc.fillText("Score: " + logic.score, W - 20, 26);
+
         gc.setFill(Color.web(C_MUTED));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 11));
-        gc.fillText("WAVE " + logic.wave, W - 14, 48);
+        gc.setFont(Font.font("Press Start 2P", FontWeight.BOLD, 10));
+        gc.fillText("WAVE " + logic.wave, W - 20, 44);
         gc.setTextAlign(TextAlignment.LEFT);
+    }
+
+    // Custom Vector Heart method (Fixes ugly text borders and weird sizing)
+    private void drawHeart(GraphicsContext gc, double x, double y, boolean filled) {
+        gc.setFill(filled ? Color.web(C_RED_LT) : Color.web("#2c1e1e"));
+
+        // Two top circles
+        gc.fillOval(x, y, 12, 12);
+        gc.fillOval(x + 10, y, 12, 12);
+
+        // Bottom triangle to complete the heart
+        gc.beginPath();
+        gc.moveTo(x + 1, y + 8);
+        gc.lineTo(x + 21, y + 8);
+        gc.lineTo(x + 11, y + 20);
+        gc.closePath();
+        gc.fill();
     }
 
     // ── Item bar ──────────────────────────────────────
@@ -361,64 +396,67 @@ public class MainGame extends Application {
         var inventory = logic.player.getInventory();
         int selected = logic.player.getSelectedItemIndex();
 
-        // Bar bg
         gc.setFill(Color.web(C_HUD_BG));
         gc.fillRect(0, barY, W, IBAR_HEIGHT);
         gc.setStroke(Color.web(C_RED, 0.4));
         gc.setLineWidth(1.5);
         gc.strokeLine(0, barY, W, barY);
 
-        // Center the slots
-        int slotSize = 40;
-        int gap = 6;
+        int slotSize = 44;
+        int gap = 10;
         int slotCount = 5;
         int totalW = slotCount * slotSize + (slotCount - 1) * gap;
         int startX = (W - totalW) / 2;
 
         for (int i = 0; i < slotCount; i++) {
             int sx = startX + i * (slotSize + gap);
-            int sy = barY + 6;
+            int sy = barY + 4;
             boolean isSel = (i == selected);
 
-            // Slot BG
+            // Slot Background
             gc.setFill(isSel ? Color.web("#2c1f0a") : Color.web("#131210"));
             gc.fillRoundRect(sx, sy, slotSize, slotSize, 6, 6);
-
-            // Slot border
             gc.setStroke(isSel ? Color.web(C_GOLD) : Color.web("#3a3830"));
             gc.setLineWidth(isSel ? 2 : 1);
             gc.strokeRoundRect(sx, sy, slotSize, slotSize, 6, 6);
 
-            // Slot number
+            // Slot number (Top Left)
             gc.setFill(Color.web(isSel ? C_GOLD : C_MUTED, 0.8));
-            gc.setFont(Font.font("Monospaced", 9));
-            gc.fillText(String.valueOf(i + 1), sx + 3, sy + 10);
+            gc.setFont(Font.font("Press Start 2P", 9));
+            gc.fillText(String.valueOf(i + 1), sx + 4, sy + 12);
 
+            // Item Inside Slot
             if (i < inventory.size()) {
                 Item item = inventory.get(i);
-                // Colored icon block
+
+                // Color Banner in the middle
                 gc.setFill(getItemColor(item.getName()));
-                gc.fillRoundRect(sx + 7, sy + 11, 26, 18, 4, 4);
-                // Name
-                gc.setFill(Color.web(isSel ? C_GOLD : C_TEXT));
-                gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 7));
+                gc.fillRoundRect(sx + 4, sy + 16, slotSize - 8, 14, 3, 3);
+
+                // Item Name
+                gc.setFill(Color.WHITE);
+                gc.setFont(Font.font("Press Start 2P", FontWeight.BOLD, 6));
                 gc.setTextAlign(TextAlignment.CENTER);
-                gc.fillText(item.getName().substring(0, Math.min(5, item.getName().length())).toUpperCase(),
-                        sx + slotSize / 2.0, sy + 23);
-                // Ammo/count badge
-                gc.setFill(Color.web("#000000", 0.65));
-                gc.fillRoundRect(sx + slotSize - 14, sy + slotSize - 13, 14, 10, 3, 3);
+                String shortName = item.getName().substring(0, Math.min(6, item.getName().length())).toUpperCase();
+                gc.fillText(shortName, sx + slotSize / 2.0, sy + 26);
+
+                // Ammo Badge
+                gc.setFill(Color.web("#000000", 0.85));
+                gc.fillRoundRect(sx + slotSize - 18, sy + slotSize - 14, 16, 12, 3, 3);
                 gc.setFill(Color.web(isSel ? C_GOLD : C_TEXT));
-                gc.setFont(Font.font("Monospaced", 8));
-                gc.fillText("" + item.getAmount(), sx + slotSize - 7, sy + slotSize - 5);
+                gc.setFont(Font.font("Press Start 2P", 7));
+                gc.setTextAlign(TextAlignment.CENTER);
+                gc.fillText("" + item.getAmount(), sx + slotSize - 10, sy + slotSize - 5);
                 gc.setTextAlign(TextAlignment.LEFT);
             }
         }
 
-        // Controls hint (right side)
+        // Controls hint
+        gc.setTextAlign(TextAlignment.RIGHT);
         gc.setFill(Color.web(C_MUTED));
-        gc.setFont(Font.font("Monospaced", 9));
-        gc.fillText("Q / E  switch    F  use", W - 160, barY + 30);
+        gc.setFont(Font.font("Press Start 2P", 8));
+        gc.fillText("Q/E Switch   F Use", W - 20, barY + 30);
+        gc.setTextAlign(TextAlignment.LEFT);
     }
 
     // ── Vignette ──────────────────────────────────────
@@ -466,23 +504,21 @@ public class MainGame extends Application {
         if (logic.isGameOver) {
             drawOverlayPanel(gc, "YOU DIED", C_RED_LT,
                     "Score  " + logic.score,
-                    "[ R ]  Restart   ·   [ ESC ]  Menu");
+                    "[ R ] Restart   ·   [ ESC ] Menu");
         } else if (logic.isWon) {
-            String action = selectedStage == 3 ? "[ R ]  Credits" : "[ R ]  Next Stage";
+            String action = selectedStage == 3 ? "[ ENTER ] Credits" : "[ ENTER ] Next Stage";
             drawOverlayPanel(gc, "SURVIVED!", C_GREEN_LT,
                     "Stage " + selectedStage + " Clear   ·   Score  " + logic.score,
-                    action + "   ·   [ ESC ]  Menu");
+                    action + "   ·   [ ESC ] Menu");
         }
     }
 
     private void drawOverlayPanel(GraphicsContext gc, String title, String titleColor,
                                   String sub, String hint) {
-        // Dim entire screen
         gc.setFill(Color.web("#000000", 0.78));
         gc.fillRect(0, 0, W, H);
 
-        // Panel box
-        int pw = 480, ph = 160;
+        int pw = 500, ph = 180;
         int px = (W - pw) / 2, py = (H - ph) / 2;
         gc.setFill(Color.web(C_HUD_BG, 0.97));
         gc.fillRoundRect(px, py, pw, ph, 12, 12);
@@ -492,25 +528,21 @@ public class MainGame extends Application {
 
         gc.setTextAlign(TextAlignment.CENTER);
 
-        // Title
         gc.setFill(Color.web(titleColor));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 40));
-        gc.fillText(title, W / 2.0, py + 58);
+        gc.setFont(Font.font("Press Start 2P", FontWeight.BOLD, 36));
+        gc.fillText(title, W / 2.0, py + 70);
 
-        // Sub
         gc.setFill(Color.web(C_TEXT));
-        gc.setFont(Font.font("Monospaced", 14));
-        gc.fillText(sub, W / 2.0, py + 90);
+        gc.setFont(Font.font("Press Start 2P", 14));
+        gc.fillText(sub, W / 2.0, py + 110);
 
-        // Hint
         gc.setFill(Color.web(C_MUTED));
-        gc.setFont(Font.font("Monospaced", 11));
-        gc.fillText(hint, W / 2.0, py + 118);
+        gc.setFont(Font.font("Press Start 2P", 11));
+        gc.fillText(hint, W / 2.0, py + 145);
 
-        // Blinking line at bottom of panel
         gc.setStroke(Color.web(titleColor, 0.3));
         gc.setLineWidth(1);
-        gc.strokeLine(px + 20, py + ph - 12, px + pw - 20, py + ph - 12);
+        gc.strokeLine(px + 30, py + ph - 16, px + pw - 30, py + ph - 16);
 
         gc.setTextAlign(TextAlignment.LEFT);
     }
@@ -518,16 +550,14 @@ public class MainGame extends Application {
     // ── Credits ───────────────────────────────────────
 
     private void drawCredits(GraphicsContext gc) {
-        // Background — same dark tile feel
         gc.setFill(Color.web(C_BG));
         gc.fillRect(0, 0, W, H);
-        // Tile suggestion
         for (int r = 0; r < H / 40 + 1; r++)
             for (int c = 0; c < W / 40 + 1; c++) {
                 gc.setFill(Color.web((r + c) % 2 == 0 ? C_TILE_A : C_TILE_B, 0.5));
                 gc.fillRect(c * 40, r * 40, 40, 40);
             }
-        // Vignette
+
         RadialGradient v = new RadialGradient(0, 0, 0.5, 0.5, 0.7, true, CycleMethod.NO_CYCLE,
                 new Stop(0, Color.TRANSPARENT), new Stop(1, Color.web("#000000", 0.85)));
         gc.setFill(v);
@@ -535,52 +565,49 @@ public class MainGame extends Application {
 
         gc.setTextAlign(TextAlignment.CENTER);
 
-        // Biohazard glow
         gc.setFill(Color.web(C_GREEN, 0.07));
         gc.fillOval(240, 40, 320, 320);
         gc.setFill(Color.web(C_GREEN_LT));
         gc.setFont(Font.font("Arial", FontWeight.BOLD, 60));
         gc.fillText("☣", W / 2.0, 220);
 
-        // Big congrats
         gc.setFill(Color.web(C_GREEN_LT));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 36));
+        gc.setFont(Font.font("Press Start 2P", FontWeight.BOLD, 36));
         gc.fillText("CONGRATULATIONS!", W / 2.0, 290);
 
         gc.setFill(Color.web(C_TEXT));
-        gc.setFont(Font.font("Monospaced", 16));
+        gc.setFont(Font.font("Press Start 2P", 16));
         gc.fillText("You survived all 3 stages.", W / 2.0, 325);
 
         gc.setFill(Color.web(C_RED_LT));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 15));
-        gc.fillText("You don't get infected.", W / 2.0, 352);
+        gc.setFont(Font.font("Press Start 2P", FontWeight.BOLD, 15));
+        gc.fillText("You didn't get infected.", W / 2.0, 352);
 
-        // Divider
         gc.setStroke(Color.web(C_MUTED, 0.4));
         gc.setLineWidth(1);
         gc.strokeLine(200, 370, 600, 370);
 
-        // Credits
         gc.setFill(Color.web(C_GOLD));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 13));
+        gc.setFont(Font.font("Press Start 2P", FontWeight.BOLD, 13));
         gc.fillText("— CREDITS —", W / 2.0, 394);
 
+        // Fixed Array Structure Below!
         String[][] creds = {
-                {"Game Logic & Design", "@pun"},
-                {"Player & Items",      "@Z3TSUNA"},
-                {"Enemies",             "@BNiD"},
+                {"Developer", "TBA"},
+                {"Assets", "Custom"},
         };
+
         int cy = 418;
         for (String[] pair : creds) {
             gc.setFill(Color.web(C_MUTED));
-            gc.setFont(Font.font("Monospaced", 12));
+            gc.setFont(Font.font("Press Start 2P", 12));
             gc.fillText(pair[0] + "   " + pair[1], W / 2.0, cy);
             cy += 20;
         }
 
         gc.setFill(Color.web(C_MUTED));
-        gc.setFont(Font.font("Monospaced", 10));
-        gc.fillText("[ R ] or [ ESC ]  →  Main Menu", W / 2.0, H - 20);
+        gc.setFont(Font.font("Press Start 2P", 10));
+        gc.fillText("[ ESC ] or [ ENTER ]  →  Main Menu", W / 2.0, H - 30);
 
         gc.setTextAlign(TextAlignment.LEFT);
     }
