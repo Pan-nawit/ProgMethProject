@@ -8,6 +8,7 @@ import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
@@ -51,6 +52,9 @@ public class MainGame extends Application {
     private static final String C_TEXT     = "#d4cfc4";
     private static final String C_MUTED    = "#6b6560";
 
+    // ── Image ──────────────────────────────────
+    private Image playerImage;
+
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -58,6 +62,11 @@ public class MainGame extends Application {
         primaryStage.setResizable(false);
         showMainMenu();
         primaryStage.show();
+        try {
+            playerImage = new Image(getClass().getResourceAsStream("/player.png"));
+        } catch (Exception e) {
+            System.err.println("❌ ไม่สามารถโหลดภาพ player.png ได้: " + e.getMessage());
+        }
     }
 
     // ── Screens ──────────────────────────────────────
@@ -261,13 +270,24 @@ public class MainGame extends Application {
         gc.setFill(Color.web("#000000", 0.4));
         gc.fillOval(px + 3, py + ph - 4, pw - 6, 8);
 
-        gc.setFill(Color.web("#2980b9"));
+        if (playerImage != null) {
+            // วาดภาพที่ตำแหน่ง px, py
+            gc.drawImage(playerImage, px, py);
+
+            // หากต้องการปรับขนาดภาพให้เท่ากับขนาดผู้เล่นในเกม (pw, ph) ให้ใช้คำสั่งนี้แทน:
+            // gc.drawImage(playerImage, px, py, pw, ph);
+        } else {
+            // โค้ดสำรองหากโหลดภาพล้มเหลว (เผื่อคุณอยากแสดงบล็อกเดิมไว้)
+            gc.setFill(Color.web("#2980b9"));
+            gc.fillRoundRect(px, py, pw, ph, 5, 5);
+        }
+        /*gc.setFill(Color.web("#2980b9"));
         gc.fillRoundRect(px, py, pw, ph, 5, 5);
         gc.setFill(Color.web("#3498db", 0.5));
         gc.fillRoundRect(px + 4, py + 4, pw - 8, 8, 3, 3); // highlight
         gc.setStroke(Color.web("#5dade2"));
         gc.setLineWidth(2);
-        gc.strokeRoundRect(px, py, pw, ph, 5, 5);
+        gc.strokeRoundRect(px, py, pw, ph, 5, 5);*/
 
         // Aim line from player to cursor (thin, subtle)
         if (!logic.isGameOver && !logic.isWon) {
