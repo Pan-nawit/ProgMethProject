@@ -27,6 +27,7 @@ public class MainGame extends Application {
     public static final int[] STAGE_DURATIONS = {30, 60, 90};
     public static final int HUD_HEIGHT = 52;
     public static final int ITEM_BAR_HEIGHT = 48; // bottom item bar
+    private double mouseX = 400, mouseY = 300;
     // play area: y=52 to y=552 (500px tall), logical coords 0..500
 
     @Override
@@ -90,13 +91,14 @@ public class MainGame extends Application {
         });
         scene.setOnMousePressed(e -> { if (e.isPrimaryButtonDown()) isMousePressed = true; });
         scene.setOnMouseReleased(e -> isMousePressed = false);
-
+        scene.setOnMouseMoved(e -> { mouseX = e.getX(); mouseY = e.getY(); });
+        scene.setOnMouseDragged(e -> { mouseX = e.getX(); mouseY = e.getY(); });
         primaryStage.setScene(scene);
 
         gameLoop = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                gameLogic.update(w, a, s, d, isMousePressed);
+                gameLogic.update(w, a, s, d, isMousePressed,mouseX, mouseY - HUD_HEIGHT);
                 GraphicsContext gc = canvas.getGraphicsContext2D();
                 gc.clearRect(0, 0, 800, 600);
                 drawGame(gc, gameLogic);

@@ -6,6 +6,7 @@ import Item.HealingItem.Bandage;
 import Item.Weapon.MachineGun;
 import Item.Weapon.Pistol;
 import Item.Weapon.Weapon;
+import Item.Weapon.Gun;
 import Player.Player;
 import enemy.BaseEnemy;
 import enemy.*;
@@ -79,7 +80,7 @@ public class GameLogic {
         return (System.currentTimeMillis() - stageStartTime) / 1000.0;
     }
 
-    public void update(boolean w, boolean a, boolean s, boolean d, boolean isMousePressed) {
+    public void update(boolean w, boolean a, boolean s, boolean d, boolean isMousePressed, double mouseX, double mouseY) {
         if (isGameOver || isWon) return;
 
         if (getElapsedSeconds() >= stageDurationSeconds) {
@@ -88,7 +89,7 @@ public class GameLogic {
             return;
         }
 
-        wave = (int)(getElapsedSeconds() / 10) + 1;
+        wave = (int) (getElapsedSeconds() / 10) + 1;
 
         if (w) player.move('w');
         if (s) player.move('s');
@@ -98,9 +99,10 @@ public class GameLogic {
 
         if (isMousePressed) {
             Weapon currentWeapon = player.getEquippedWeapon();
-            if (currentWeapon != null) {
-                currentWeapon.use(player);
-                if (currentWeapon.isEmpty()) player.removeItem(currentWeapon);
+            if (currentWeapon instanceof Gun gun) {  // cast + check ในบรรทัดเดียว (Java 16+)
+                gun.setMouseTarget(mouseX, mouseY);
+                gun.use(player);
+                if (gun.isEmpty()) player.removeItem(gun);
             }
         }
 

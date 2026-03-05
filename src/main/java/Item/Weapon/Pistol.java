@@ -15,17 +15,14 @@ public class Pistol extends Gun {
 
     @Override
     public void shoot(Player player) {
-        int dx = 0, dy = 0;
-        switch (player.getLastFacing()) {
-            case 'w' -> dy = -1;
-            case 's' -> dy =  1;
-            case 'a' -> dx = -1;
-            case 'd' -> dx =  1;
-        }
-        int spawnX = player.getX() + player.getWidth()  / 2;
-        int spawnY = player.getY() + player.getHeight() / 2;
-        Bullet b = new Bullet(spawnX, spawnY, dx, dy, 20, damage, name);
-        GameLogic.addBullet(b);
+        double cx = player.getX() + player.getWidth()  / 2.0;
+        double cy = player.getY() + player.getHeight() / 2.0;
+        double ddx = targetX - cx, ddy = targetY - cy;
+        double len = Math.sqrt(ddx*ddx + ddy*ddy);
+        if (len == 0) return;
+        ddx /= len; ddy /= len;
+
+        GameLogic.addBullet(new Bullet((int)cx, (int)cy, ddx, ddy, 20, damage, name));
         player.addRecoil(getRecoilAmount());
         playGunSound();
     }

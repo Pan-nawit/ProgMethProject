@@ -14,29 +14,24 @@ public class Shotgun extends Gun {
 
     @Override
     public void shoot(Player player) {
-        int dx = 0, dy = 0;
-        switch (player.getLastFacing()) {
-            case 'w' -> dy = -1;
-            case 's' -> dy =  1;
-            case 'a' -> dx = -1;
-            case 'd' -> dx =  1;
-        }
-        int spawnX = player.getX() + player.getWidth()  / 2;
-        int spawnY = player.getY() + player.getHeight() / 2;
-        int spreadX = (dx == 0) ? 1 : 0;
-        int spreadY = (dy == 0) ? 1 : 0;
+        double cx = player.getX() + player.getWidth()  / 2.0;
+        double cy = player.getY() + player.getHeight() / 2.0;
+        double ddx = targetX - cx, ddy = targetY - cy;
+        double len = Math.sqrt(ddx*ddx + ddy*ddy);
+        if (len == 0) return;
+        ddx /= len; ddy /= len;
 
-        Bullet b1 = new Bullet(spawnX, spawnY, dx,           dy,           15, damage, name);
-        Bullet b2 = new Bullet(spawnX, spawnY, dx - spreadX, dy - spreadY, 15, damage, name);
-        Bullet b3 = new Bullet(spawnX, spawnY, dx + spreadX, dy + spreadY, 15, damage, name);
+        // perpendicular vector สำหรับ spread
+        double perpX = -ddy;
+        double perpY =  ddx;
 
-        GameLogic.addBullet(b1);
-        GameLogic.addBullet(b2);
-        GameLogic.addBullet(b3);
+        GameLogic.addBullet(new Bullet((int)cx, (int)cy, ddx,               ddy,               15, damage, name));
+        GameLogic.addBullet(new Bullet((int)cx, (int)cy, ddx + perpX * 0.3, ddy + perpY * 0.3, 15, damage, name));
+        GameLogic.addBullet(new Bullet((int)cx, (int)cy, ddx - perpX * 0.3, ddy - perpY * 0.3, 15, damage, name));
 
         player.applyKnockback(5);
         player.addRecoil(getRecoilAmount());
-        playGunSound();
+        playGunSound();;
     }
 
     @Override

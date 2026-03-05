@@ -3,10 +3,12 @@ package Item.Weapon;
 import Interface.Cooldownable;
 import Item.Bullet.Bullet;
 import Player.Player;
+import GameLogic.GameLogic;
 
 public abstract class Gun extends Weapon implements Cooldownable {
     protected long lastFiredTime = 0; // เวลาที่ยิงนัดล่าสุด
-    protected long fireRate;         // ระยะห่างระหว่างนัด (Cooldown) เช่น 100ms, 500ms
+    protected long fireRate;
+    protected double targetX, targetY;// ระยะห่างระหว่างนัด (Cooldown) เช่น 100ms, 500ms
     public Gun(String name,int amount,int damage,String imagePath, String soundPath,long fireRate){
         super(name, amount, damage,imagePath,soundPath);
         this.fireRate=fireRate;
@@ -36,24 +38,31 @@ public abstract class Gun extends Weapon implements Cooldownable {
         }
     }
     public void shoot(Player player) {
-        int dirX = 0;
-        int dirY = 0;
-        switch (player.getLastFacing()) {
-            case 'w' -> dirY = -1; // ขึ้น
-            case 's' -> dirY = 1;  // ลง
-            case 'a' -> dirX = -1; // ซ้าย
-            case 'd' -> dirX = 1;  // ขวา
-        }
+        // จุดกึ่งกลาง player
+        double cx = player.getX() + player.getWidth()  / 2.0;
+        double cy = player.getY() + player.getHeight() / 2.0;
+
+        // vector จาก player ไป mouse
+        double ddx = targetX - cx;
+        double ddy = targetY - cy;
+
+        // normalize
+        double len = Math.sqrt(ddx * ddx + ddy * ddy);
+        if (len == 0) return;
+        ddx /= len;
+        ddy /= len;
+
         Bullet bullet = new Bullet(
-                player.getX() + (player.getWidth()/2), // ออกจากกลางตัว
-                player.getY() + (player.getHeight()/2),
-                dirX, dirY,
+                (int) cx, (int) cy,
+                ddx, ddy,
                 20, this.damage, this.name
         );
-        // 3. (สำคัญ) ส่งกระสุนเข้าสู่ GameWorld หรือ List ของกระสุน
-        // ตัวอย่าง: GamePanel.addBullet(bullet);
-        // 4. เล่นเสียงปืน
+        GameLogic.addBullet(bullet);
         playGunSound();
     }
     public abstract void playGunSound();
+    public void setMouseTarget(double mx, double my) {
+        this.targetX = mx;
+        this.targetY = my;
+    }
 }
