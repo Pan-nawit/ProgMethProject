@@ -143,6 +143,9 @@ public abstract class BaseEnemy implements Attackable {
     public void setAttackCooldown(long cooldown) {
         this.attackCooldown = cooldown;
     }
+    public int getMaxHp() {
+        return maxHp;
+    }
     public int getX(){
         return (int)x;
     }
