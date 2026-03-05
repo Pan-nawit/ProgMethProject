@@ -3,13 +3,13 @@ import Item.Item;
 import Player.Player;
 
 public abstract class Weapon extends Item {
+    protected int damage;
     public int getDamage() {
         return damage;
     }
     public void setDamage(int damage) {
         this.damage = damage;
     }
-    protected int damage;
     public Weapon(String name,int amount,int damage,String imagePath, String soundPath){
         super(name,amount,imagePath,soundPath);
         setDamage(damage);

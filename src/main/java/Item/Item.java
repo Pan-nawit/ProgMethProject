@@ -16,6 +16,9 @@ public abstract class Item implements Pickable {
     protected String imagePath;
     protected String soundPath;
     protected BufferedImage image;
+    protected int x, y;
+    protected int width = 16;
+    protected int height = 16;
 
     public Item(String name,int amount,String imagePath, String soundPath) {
         setName(name);
@@ -86,5 +89,10 @@ public abstract class Item implements Pickable {
     public void setAmount(int amount) {
         this.amount = amount;
     }
+    public int getX() { return x; }
+    public int getY() { return y; }
+    public void setX(int x) { this.x = x; }
+    public void setY(int y) { this.y = y; }
+    public Rectangle getBounds() { return new Rectangle(x, y, width, height); }
     public BufferedImage getImage() { return image; }
 }

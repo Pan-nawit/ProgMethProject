@@ -2,7 +2,7 @@ package Item.Weapon;
 
 public class Pistol extends Gun {
     public Pistol(){
-        super("Pistol",5,1,"","",1000);
+        super("Pistol",5,1,"Images/Gun/Pistol.png","",1000);
     }
     @Override
     public double getRecoilAmount() {

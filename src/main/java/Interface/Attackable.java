@@ -1,4 +1,4 @@
-package enemy;
+package Interface;
 
 import Player.Player;
 

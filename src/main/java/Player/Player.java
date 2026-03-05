@@ -1,5 +1,6 @@
 package Player;
 import Item.Item;
+import Item.Weapon.Weapon;
 import Status.Status;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,7 @@ public class Player {
 
     private List<Status> statusList = new ArrayList<>();
     private List<Item> inventory = new ArrayList<>();
+    private int selectedItemIndex = 0; // เพิ่มเพื่อระบุว่าเลือกไอเทมชิ้นไหนใน inventory
 
     public Player(){
         this.x=0;
@@ -37,6 +39,31 @@ public class Player {
             case 's' -> y += currentSpeed; // เดินลง
             case 'a' -> x -= currentSpeed; // เดินซ้าย
             case 'd' -> x += currentSpeed; // เดินขวา
+        }
+    }
+    // ดึงอาวุธที่กำลังถืออยู่ (สมมติว่าเป็นไอเทมที่เลือกอยู่ใน index ปัจจุบัน)
+    public Weapon getEquippedWeapon() {
+        if (!inventory.isEmpty() && selectedItemIndex < inventory.size()) {
+            Item item = inventory.get(selectedItemIndex);
+            if (item instanceof Weapon) {
+                return (Weapon) item;
+            }
+        }
+        return null;
+    }
+
+    // ลบไอเทมออกจากตัว (เรียกใช้เมื่อกระสุนหมด)
+    public void removeItem(Item item) {
+        inventory.remove(item);
+        if (selectedItemIndex >= inventory.size()) {
+            selectedItemIndex = Math.max(0, inventory.size() - 1);
+        }
+    }
+
+    // เปลี่ยนอาวุธ (เผื่อคุณเพิ่มปุ่มเปลี่ยนปืนในอนาคต)
+    public void selectNextItem() {
+        if (!inventory.isEmpty()) {
+            selectedItemIndex = (selectedItemIndex + 1) % inventory.size();
         }
     }
     public void onAttacked(int damage, Status incomingStatus) {
@@ -97,13 +124,13 @@ public class Player {
         return statusList.stream().anyMatch(s -> s.getName().equals(statusName));
     }
     public void removeStatus(String statusName) {
-        statusList.stream()
-                .filter(s -> s.getName().equals(statusName))
-                .findFirst()
-                .ifPresent(s -> {
-                    s.undo(this); // <--- คืนค่า speed เป็น defaultSpeed โดยไม่ต้องใช้ if-else ใน Player
-                    statusList.remove(s);
-                });
+        statusList.removeIf(s -> {
+            if (s.getName().equals(statusName)) {
+                s.undo(this);
+                return true;
+            }
+            return false;
+        });
     }
     public Rectangle getBounds() {
         return new Rectangle(x, y, width, height);

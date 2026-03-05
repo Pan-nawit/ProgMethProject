@@ -1,10 +1,11 @@
 package enemy;
 
+import Interface.Attackable;
 import Player.Player;
 
 import java.awt.*;
 
-public abstract class BaseEnemy implements Attackable{
+public abstract class BaseEnemy implements Attackable {
     // Stats
     protected int hp;
     protected int maxHp; // เพิ่มตัวนี้ เพื่อไว้คำนวณหลอดเลือด

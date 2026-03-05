@@ -6,9 +6,9 @@ public class Bullet {
     private int x, y;
     private int speed;
     private int damage;
-    private int dirX, dirY;
+    private float dirX, dirY;
     private String type;
-    public Bullet(int x, int y, int dirX, int dirY, int speed, int damage, String type) {
+    public Bullet(int x, int y, float dirX, float dirY, int speed, int damage, String type) {
         this.x = x;
         this.y = y;
         this.dirX = dirX;
