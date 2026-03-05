@@ -24,8 +24,8 @@ public class Player {
     private int selectedItemIndex = 0; // เพิ่มเพื่อระบุว่าเลือกไอเทมชิ้นไหนใน inventory
 
     public Player(){
-        this.x=0;
-        this.y=0;
+        this.x=384;
+        this.y=258; // center of play area (548/2 - 16)
         setHp(maxHp);
         setSpeed(defaultSpeed);
     }
@@ -41,7 +41,7 @@ public class Player {
             }
             case 's' -> {
                 y += currentSpeed;
-                if (y > 600 - height) y = 600 - height; // หักลบความสูงของ Player ด้วย
+                if (y > 548 - height) y = 548 - height; // play area height (600 - 52 HUD)
             }
             case 'a' -> {
                 x -= currentSpeed;

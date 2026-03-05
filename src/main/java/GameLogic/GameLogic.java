@@ -12,31 +12,27 @@ import java.util.Random;
 
 public class GameLogic {
 
-    // --- Characters & Enemies ---
     public Player player;
     public List<BaseEnemy> enemies;
 
     public static List<Bullet> bullets;
     public List<Item.Item> itemsOnGround;
 
-    // --- Game State ---
     public boolean isGameOver = false;
     public boolean isWon = false;
     public int wave = 1;
     public int score = 0;
 
-    // --- Stage / Timer ---
     private int currentStage = 1;
-    private int stageDurationSeconds = 30; // set by initGame(stage)
+    private int stageDurationSeconds = 30;
     private long stageStartTime = 0;
 
-    // --- Spawning ---
     private long lastSpawnTime = 0;
     private long spawnCooldown = 2000;
     private Random random = new Random();
 
     private int screenWidth = 800;
-    private int screenHeight = 600;
+    private int screenHeight = 548;
 
     public GameLogic() {
         initGame(1);
@@ -44,16 +40,13 @@ public class GameLogic {
 
     public void initGame(int stage) {
         currentStage = stage;
-        // Stage durations: Stage 1 = 30s, Stage 2 = 60s, Stage 3 = 90s
         stageDurationSeconds = stage * 30;
-        // Scale difficulty per stage
         spawnCooldown = switch (stage) {
-            case 1 -> 2000;   // 1 enemy every 2s
-            case 2 -> 1200;   // 1 enemy every 1.2s
-            case 3 -> 700;    // 1 enemy every 0.7s
+            case 1 -> 2000;
+            case 2 -> 1200;
+            case 3 -> 700;
             default -> 2000;
         };
-
         player = new Player();
         enemies = new ArrayList<>();
         bullets = new ArrayList<>();
@@ -67,14 +60,12 @@ public class GameLogic {
         lastSpawnTime = stageStartTime;
     }
 
-    // kept for backward compat
     public void initGame() { initGame(1); }
 
     public static void addBullet(Bullet b) {
         if (bullets != null) bullets.add(b);
     }
 
-    /** Returns elapsed seconds since stage started */
     public double getElapsedSeconds() {
         return (System.currentTimeMillis() - stageStartTime) / 1000.0;
     }
@@ -82,25 +73,20 @@ public class GameLogic {
     public void update(boolean w, boolean a, boolean s, boolean d, boolean isMousePressed) {
         if (isGameOver || isWon) return;
 
-        // ── Win condition: survived long enough ──────────────
         if (getElapsedSeconds() >= stageDurationSeconds) {
             isWon = true;
-            // Stop all status timers
             player.getStatusList().forEach(status -> player.removeStatus(status.getName()));
             return;
         }
 
-        // Wave counter (every 10s advance wave)
         wave = (int)(getElapsedSeconds() / 10) + 1;
 
-        // 1. Player movement
         if (w) player.move('w');
         if (s) player.move('s');
         if (a) player.move('a');
         if (d) player.move('d');
         player.recoverRecoil();
 
-        // 2. Shooting
         if (isMousePressed) {
             Weapon currentWeapon = player.getEquippedWeapon();
             if (currentWeapon != null) {
@@ -111,7 +97,6 @@ public class GameLogic {
             }
         }
 
-        // 3. Bullet update
         for (int i = 0; i < bullets.size(); i++) {
             Bullet b = bullets.get(i);
             b.update();
@@ -120,7 +105,6 @@ public class GameLogic {
             }
         }
 
-        // 4. Item pickup
         for (int i = 0; i < itemsOnGround.size(); i++) {
             Item.Item item = itemsOnGround.get(i);
             if (player.getBounds().intersects(item.getBounds())) {
@@ -129,20 +113,17 @@ public class GameLogic {
             }
         }
 
-        // 5. Spawning & enemy update
         handleSpawning();
         for (int i = 0; i < enemies.size(); i++) {
             BaseEnemy e = enemies.get(i);
             e.update(player);
             checkBulletHit(e);
-
             if (e.isDead()) {
                 enemies.remove(i--);
-                score += 10 * currentStage; // higher stages = more score
+                score += 10 * currentStage;
             }
         }
 
-        // 6. Game Over check
         if (player.getHp() <= 0) {
             isGameOver = true;
             player.getStatusList().forEach(status -> player.removeStatus(status.getName()));
@@ -165,18 +146,14 @@ public class GameLogic {
     private void handleSpawning() {
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastSpawnTime > spawnCooldown) {
+            int centerX = screenWidth / 2;
+            int centerY = screenHeight / 2;
+            int spread = 200;
+            int spawnX = centerX + random.nextInt(spread * 2) - spread;
+            int spawnY = centerY + random.nextInt(spread * 2) - spread;
+            spawnX = Math.max(0, Math.min(spawnX, screenWidth - 32));
+            spawnY = Math.max(0, Math.min(spawnY, screenHeight - 32));
 
-            // Spawn off-screen edges
-            int spawnX, spawnY;
-            int edge = random.nextInt(4);
-            switch (edge) {
-                case 0 -> { spawnX = random.nextInt(screenWidth); spawnY = -40; }
-                case 1 -> { spawnX = random.nextInt(screenWidth); spawnY = screenHeight + 10; }
-                case 2 -> { spawnX = -40; spawnY = random.nextInt(screenHeight); }
-                default -> { spawnX = screenWidth + 10; spawnY = random.nextInt(screenHeight); }
-            }
-
-            // Spawn variety scales with stage and wave
             int roll = random.nextInt(100);
             BaseEnemy spawned;
             if (currentStage == 1) {
@@ -187,7 +164,6 @@ public class GameLogic {
                 else if (roll < 70) spawned = new AnimalZombies(spawnX, spawnY);
                 else spawned = new zombie(spawnX, spawnY);
             } else {
-                // Stage 3 – hardest mix
                 if (roll < 15) spawned = new juggernaut(spawnX, spawnY);
                 else if (roll < 35) spawned = new Screamers(spawnX, spawnY);
                 else if (roll < 55) spawned = new Runners(spawnX, spawnY);
@@ -197,7 +173,6 @@ public class GameLogic {
             enemies.add(spawned);
             lastSpawnTime = currentTime;
 
-            // Gradually speed up spawning (cap per stage)
             long minCooldown = switch (currentStage) { case 1 -> 800; case 2 -> 500; default -> 300; };
             if (spawnCooldown > minCooldown) spawnCooldown -= 5;
         }

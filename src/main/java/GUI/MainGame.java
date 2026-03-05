@@ -101,41 +101,50 @@ public class MainGame extends Application {
         gameLoop.start();
     }
 
+    // HUD height — play area starts below this
+    public static final int HUD_HEIGHT = 52;
+
     private void drawGame(GraphicsContext gc, GameLogic logic) {
-        // Background
-        gc.setFill(Color.web("#1a1a1a"));
+        // Full background
+        gc.setFill(Color.web("#111111"));
         gc.fillRect(0, 0, 800, 600);
 
-        // Grid lines (subtle)
+        // Play area background
+        gc.setFill(Color.web("#1a1a1a"));
+        gc.fillRect(0, HUD_HEIGHT, 800, 600 - HUD_HEIGHT);
+
+        // Grid lines — only in play area
         gc.setStroke(Color.web("#222222"));
         gc.setLineWidth(1);
-        for (int i = 0; i < 800; i += 40) gc.strokeLine(i, 0, i, 600);
-        for (int j = 0; j < 600; j += 40) gc.strokeLine(0, j, 800, j);
+        for (int i = 0; i < 800; i += 40) gc.strokeLine(i, HUD_HEIGHT, i, 600);
+        for (int j = HUD_HEIGHT; j < 600; j += 40) gc.strokeLine(0, j, 800, j);
 
-        // Player
+        // Player — offset by HUD_HEIGHT for visual
         gc.setFill(Color.web("#3498db"));
-        gc.fillRect(logic.player.getX(), logic.player.getY(), logic.player.getWidth(), logic.player.getHeight());
+        gc.fillRect(logic.player.getX(), logic.player.getY() + HUD_HEIGHT,
+                logic.player.getWidth(), logic.player.getHeight());
         gc.setStroke(Color.web("#5dade2"));
         gc.setLineWidth(2);
-        gc.strokeRect(logic.player.getX(), logic.player.getY(), logic.player.getWidth(), logic.player.getHeight());
+        gc.strokeRect(logic.player.getX(), logic.player.getY() + HUD_HEIGHT,
+                logic.player.getWidth(), logic.player.getHeight());
 
-        // Enemies
+        // Enemies — offset by HUD_HEIGHT for visual
         for (var enemy : logic.enemies) {
+            int ey = enemy.getY() + HUD_HEIGHT;
             gc.setFill(Color.web("#c0392b"));
-            gc.fillRect(enemy.getX(), enemy.getY(), enemy.getWidth(), enemy.getHeight());
+            gc.fillRect(enemy.getX(), ey, enemy.getWidth(), enemy.getHeight());
 
-            // Health bar
             double hpPercent = (double) enemy.getHP() / Math.max(enemy.getMaxHp(), 1);
             gc.setFill(Color.web("#1a1a1a"));
-            gc.fillRect(enemy.getX(), enemy.getY() - 8, enemy.getWidth(), 5);
+            gc.fillRect(enemy.getX(), ey - 8, enemy.getWidth(), 5);
             gc.setFill(hpPercent > 0.5 ? Color.web("#2ecc71") : Color.web("#e74c3c"));
-            gc.fillRect(enemy.getX(), enemy.getY() - 8, (int)(enemy.getWidth() * hpPercent), 5);
+            gc.fillRect(enemy.getX(), ey - 8, (int)(enemy.getWidth() * hpPercent), 5);
         }
 
-        // Bullets
+        // Bullets — offset by HUD_HEIGHT for visual
         gc.setFill(Color.YELLOW);
         for (var b : logic.bullets) {
-            gc.fillOval(b.getX() - 3, b.getY() - 3, 6, 6);
+            gc.fillOval(b.getX() - 3, b.getY() + HUD_HEIGHT - 3, 6, 6);
         }
 
         // ── HUD ──────────────────────────────────────────────
