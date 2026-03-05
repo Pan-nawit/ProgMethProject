@@ -18,7 +18,7 @@ javafx {
 }
 
 application {
-    mainClass = 'GUI.MainGame'
+    mainClass = 'GUI.Launcher' // เปลี่ยนจาก GUI.MainGame
 }
 
 dependencies {
@@ -27,7 +27,19 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     //implementation 'org.jfree:fxgraphics2d:1.8'
 }
-
+// เพิ่มบล็อกนี้เข้าไปด้านล่างสุดของ build.gradle
+jar {
+    manifest {
+        // ชี้ไปที่คลาส Launcher ที่เราสร้างขึ้นใหม่
+        attributes 'Main-Class': 'GUI.Launcher'
+    }
+    // คำสั่งนี้จะทำการดึงเอา Library ภายนอกทั้งหมด (รวมถึง JavaFX) เข้ามามัดรวมใน .jar
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    // ป้องกันปัญหาไฟล์ซ้ำกันเวลาบีบอัด
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
 test {
     useJUnitPlatform()
 }
