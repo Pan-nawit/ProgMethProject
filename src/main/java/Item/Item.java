@@ -2,6 +2,7 @@ package Item;
 
 import Interface.Pickable;
 import Player.Player;
+import Sound.SoundManager;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -37,21 +38,7 @@ public abstract class Item implements Pickable {
     public abstract void use(Player player);
 
     public static void playGunSound() {
-        new Thread(() -> {
-            try {
-                URL url = Item.class.getResource("/Sound/Gun/gunshot.wav");
-                if (url != null) {
-                    AudioInputStream audioIn = AudioSystem.getAudioInputStream(url);
-                    Clip clip = AudioSystem.getClip();
-                    clip.open(audioIn);
-                    clip.start();
-                } else {
-                    System.out.println("⚠️ Warning: Sound not found at /Sounds/Gun/gunshot.wav");
-                }
-            } catch (Exception e) {
-                System.out.println("❌ Error playing sound: " + e.getMessage());
-            }
-        }).start();
+        SoundManager.getInstance().playSFX("/Sound/Gun/gunshot.wav");
     }
 
     public String getName() {

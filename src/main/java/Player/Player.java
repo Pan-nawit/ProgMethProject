@@ -1,6 +1,7 @@
 package Player;
 import Item.Item;
 import Item.Weapon.Weapon;
+import Sound.SoundManager;
 import Status.Status;
 
 import javax.sound.sampled.AudioInputStream;
@@ -88,26 +89,9 @@ public class Player {
     }
     public void onAttacked(int damage, Status incomingStatus) {
         setHp(getHp() - damage);
-        playHurtSound();
+        SoundManager.getInstance().playSFX("/Sound/Player/classic_hurt.wav");
         if (incomingStatus != null && !hasStatus(incomingStatus.getName()))
             addStatus(incomingStatus);
-    }
-    private static void playHurtSound() {
-        new Thread(() -> {
-            try {
-                URL url = Player.class.getResource("/Sound/Player/classic_hurt.wav");
-                if (url != null) {
-                    AudioInputStream audioIn = AudioSystem.getAudioInputStream(url);
-                    Clip clip = AudioSystem.getClip();
-                    clip.open(audioIn);
-                    clip.start();
-                } else {
-                    System.out.println("⚠️ Warning: Sound not found at /Sound/Player/classic_hurt.wav");
-                }
-            } catch (Exception e) {
-                System.out.println("❌ Error playing hurt sound: " + e.getMessage());
-            }
-        }).start();
     }
     public void applyKnockback(int force) {
         switch (lastFacing) {
