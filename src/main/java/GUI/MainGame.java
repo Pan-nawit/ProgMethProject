@@ -19,6 +19,9 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class MainGame extends Application {
 
     public static int selectedStage  = 1;
@@ -55,6 +58,9 @@ public class MainGame extends Application {
     // ── Image & Font ──────────────────────────────────
     private Image playerImage;
     private Font pixelFont;
+    private Map<String, Image> enemyImages = new HashMap<>();
+    private Map<String, Image> itemImages = new HashMap<>();
+
 
     @Override
     public void start(Stage primaryStage) {
@@ -73,7 +79,19 @@ public class MainGame extends Application {
         primaryStage.show();
 
         try {
-            playerImage = new Image(getClass().getResourceAsStream("/player.png"));
+            playerImage = new Image(getClass().getResourceAsStream("/Images/player.png"));
+            //itemImages.put("Pistol", new Image(getClass().getResourceAsStream("/Images/Gun/Pistol.png")));
+            //itemImages.put("MachineGun", new Image(getClass().getResourceAsStream("/Images/Gun/Machinegun.png")));
+            //itemImages.put("Shotgun", new Image(getClass().getResourceAsStream("/shotgun.png")));
+            itemImages.put("Medkit", new Image(getClass().getResourceAsStream("/Images/HealingItems/medkit.png")));
+            itemImages.put("Bandage", new Image(getClass().getResourceAsStream("/Images/HealingItems/bandage.png")));
+            enemyImages.put("zombie", new Image(getClass().getResourceAsStream("/Images/enemy/zombie.png")));
+            enemyImages.put("Runners", new Image(getClass().getResourceAsStream("/Images/enemy/runners.png")));
+            enemyImages.put("juggernaut", new Image(getClass().getResourceAsStream("/Images/enemy/juggernaut.png")));
+            enemyImages.put("Screamers", new Image(getClass().getResourceAsStream("/Images/enemy/screamers.png")));
+            enemyImages.put("AnimalZombies", new Image(getClass().getResourceAsStream("/Images/enemy/animalzombies.png")));
+            enemyImages.put("SlowZombie", new Image(getClass().getResourceAsStream("/Images/enemy/slowzombie.png")));
+            enemyImages.put("HeavyZombie", new Image(getClass().getResourceAsStream("/Images/enemy/heavyzombie.png")));
         } catch (Exception e) {
             System.err.println("❌ ไม่สามารถโหลดภาพ player.png ได้: " + e.getMessage());
         }
@@ -145,7 +163,7 @@ public class MainGame extends Application {
                 float lmx = (float) mouseScreenX;
                 float lmy = (float)(mouseScreenY - HUD_HEIGHT);
                 gameLogic.player.setMousePos(lmx, lmy);
-                gameLogic.update(w, a, s, d, isMousePressed);
+                gameLogic.update(w, a, s, d, isMousePressed, gameLogic.player.getMouseX(), gameLogic.player.getMouseY());
                 GraphicsContext gc = canvas.getGraphicsContext2D();
                 gc.clearRect(0, 0, W, H);
                 drawGame(gc, gameLogic);
@@ -223,21 +241,33 @@ public class MainGame extends Application {
             int ix = item.getX();
             int iy = item.getY() + HUD_HEIGHT;
 
-            // Outer glow / hit box
-            gc.setFill(Color.web(C_GOLD, 0.25));
-            gc.fillRoundRect(ix - 3, iy - 3, 26, 26, 6, 6);
+            // 1. วาดแสงเรืองรองใต้ไอเทม (Glow Effect) เอาไว้ดึงดูดสายตา
+            gc.setFill(Color.web(C_GOLD, 0.18));
+            gc.fillRoundRect(ix - 2, iy - 2, 20, 20, 5, 5);
 
-            // Colored item block
-            gc.setFill(getItemColor(item.getName()));
-            gc.fillRoundRect(ix, iy, 20, 20, 4, 4);
-            gc.setStroke(Color.web(C_GOLD, 0.8));
-            gc.setLineWidth(1.5);
-            gc.strokeRoundRect(ix, iy, 20, 20, 4, 4);
+            // 2. ดึงรูปภาพไอเทมจาก Map
+            Image img = itemImages.get(item.getName());
 
-            // Item text (White for better contrast)
-            gc.setFill(Color.WHITE);
-            gc.setFont(Font.font("Press Start 2P", FontWeight.BOLD, 6));
-            gc.fillText(item.getName().substring(0, Math.min(3, item.getName().length())).toUpperCase(), ix + 2, iy + 13);
+            if (img != null) {
+                // ถ้ารูปมีอยู่จริง ให้วาดรูปภาพลงไป (สมมติให้รูปแสดงขนาด 16x16)
+                gc.drawImage(img, ix, iy, 16, 16);
+
+                // วาดขอบทองรอบรูปภาพนิดหน่อยให้สวยงาม
+                gc.setStroke(Color.web(C_GOLD, 0.7));
+                gc.setLineWidth(1);
+                gc.strokeRoundRect(ix, iy, 16, 16, 4, 4);
+
+            } else {
+                // 3. Fallback: ถ้าโหลดรูปไม่ได้ หรือลืมใส่รูป ให้กลับมาวาดบล็อกสีๆ แบบเดิม
+                gc.setFill(getItemColor(item.getName()));
+                gc.fillRoundRect(ix, iy, 16, 16, 4, 4);
+                gc.setStroke(Color.web(C_GOLD, 0.7));
+                gc.setLineWidth(1);
+                gc.strokeRoundRect(ix, iy, 16, 16, 4, 4);
+                gc.setFill(Color.web(C_HUD_BG));
+                gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 8));
+                gc.fillText(item.getName().substring(0, Math.min(3, item.getName().length())), ix + 1, iy + 11);
+            }
         }
 
         // Bullets
@@ -256,15 +286,21 @@ public class MainGame extends Application {
             int ey = enemy.getY() + HUD_HEIGHT;
             int ew = enemy.getWidth();
             int eh = enemy.getHeight();
+            String enemyType = enemy.getClass().getSimpleName();
+            Image img = enemyImages.get(enemyType);
 
-            gc.setFill(Color.web("#000000", 0.35));
-            gc.fillOval(ex + 2, ey + eh - 4, ew - 4, 8);
+            if (img != null) {
+                // ถ้ารูปมีอยู่จริง ให้วาดรูปภาพศัตรู
+                gc.drawImage(img, ex, ey, ew, eh);
+            } else {
+                // Fallback: ถ้ายังไม่ได้ใส่รูป ให้วาดบล็อกสีเหมือนเดิม
+                gc.setFill(enemy.getEnemyColor());
+                gc.fillRoundRect(ex, ey, ew, eh, 4, 4);
 
-            gc.setFill(enemy.getEnemyColor());
-            gc.fillRoundRect(ex, ey, ew, eh, 4, 4);
-            gc.setStroke(Color.web("#000000", 0.6));
-            gc.setLineWidth(1.5);
-            gc.strokeRoundRect(ex, ey, ew, eh, 4, 4);
+                gc.setStroke(Color.web("#000000", 0.6));
+                gc.setLineWidth(1.5);
+                gc.strokeRoundRect(ex, ey, ew, eh, 4, 4);
+            }
 
             double hpPct = (double) enemy.getHP() / Math.max(enemy.getMaxHp(), 1);
             gc.setFill(Color.web("#000000", 0.7));
@@ -429,16 +465,24 @@ public class MainGame extends Application {
             if (i < inventory.size()) {
                 Item item = inventory.get(i);
 
-                // Color Banner in the middle
-                gc.setFill(getItemColor(item.getName()));
-                gc.fillRoundRect(sx + 4, sy + 16, slotSize - 8, 14, 3, 3);
+                // 🌟 เช็คว่าเรามีรูปไอเทมชิ้นนี้โหลดเก็บไว้ไหม
+                Image img = itemImages != null ? itemImages.get(item.getName()) : null;
 
-                // Item Name
-                gc.setFill(Color.WHITE);
-                gc.setFont(Font.font("Press Start 2P", FontWeight.BOLD, 6));
-                gc.setTextAlign(TextAlignment.CENTER);
-                String shortName = item.getName().substring(0, Math.min(6, item.getName().length())).toUpperCase();
-                gc.fillText(shortName, sx + slotSize / 2.0, sy + 26);
+                if (img != null) {
+                    // ถ้ามีรูป ให้วาดรูปลงไปตรงกลางช่องเลย (ขนาดประมาณ 26x26)
+                    gc.drawImage(img, sx + 7, sy + 7, 26, 26);
+                } else {
+                    // ถ้าไม่มีรูป (Fallback) ให้กลับมาวาดไอคอนกล่องสี่เหลี่ยมเหมือนเดิม
+                    gc.setFill(getItemColor(item.getName()));
+                    gc.fillRoundRect(sx + 4, sy + 16, slotSize-8, 14, 3, 3);
+
+                    // Name
+                    gc.setFill(Color.web(isSel ? C_GOLD : C_TEXT));
+                    gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 7));
+                    gc.setTextAlign(TextAlignment.CENTER);
+                    gc.fillText(item.getName().substring(0, Math.min(5, item.getName().length())).toUpperCase(),
+                            sx + slotSize / 2.0, sy + 23);
+                }
 
                 // Ammo Badge
                 gc.setFill(Color.web("#000000", 0.85));
