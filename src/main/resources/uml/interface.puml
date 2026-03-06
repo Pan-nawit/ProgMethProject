@@ -1,0 +1,15 @@
+@startuml
+interface Interface.Attackable {
+~ void Attackplayer(Player)
+}
+
+interface Interface.Pickable {
+~ void onPickUp(Player)
+}
+
+interface Interface.Cooldownable {
+~ boolean isReady()
+~ void startCooldown()
+}
+
+@enduml
