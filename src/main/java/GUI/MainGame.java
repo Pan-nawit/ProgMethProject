@@ -370,17 +370,24 @@ public class MainGame extends Application {
         }
 
         // Status badges
-        int bx = 160;
+        int badgeY = 8;
         for (var st : gameLogic.player.getStatusList()) {
             boolean bleed = st.getName().equalsIgnoreCase("bleeding");
+            int badgeW = 90;
+
             gc.setFill(Color.web(bleed ? "#5a0808" : "#2a1a08", 0.95));
-            gc.fillRoundRect(bx, 11, 72, 18, 5, 5);
+            gc.fillRoundRect(160, badgeY, badgeW, 18, 5, 5);
             gc.setStroke(Color.web(bleed ? "#c0392b" : "#c07830", 0.45));
-            gc.setLineWidth(1); gc.strokeRoundRect(bx, 11, 72, 18, 5, 5);
+            gc.setLineWidth(1); gc.strokeRoundRect(160, badgeY, badgeW, 18, 5, 5);
+
             gc.setFill(Color.web(bleed ? "#ffaaaa" : "#ffd090"));
-            gc.setFont(getCustomFont(9, true));
-            gc.fillText((bleed ? "🩸 " : "🦵 ") + st.getName().toUpperCase(), bx + 5, 23);
-            bx += 78;
+            gc.setFont(Font.font("Arial", 10));
+            gc.fillText(bleed ? "🩸" : "🦵", 164, badgeY + 13);
+
+            gc.setFont(getCustomFont(7, true));
+            gc.fillText(st.getName().toUpperCase(), 178, badgeY + 13);
+
+            badgeY += 22;
         }
 
         // Timer (center)
@@ -611,7 +618,7 @@ public class MainGame extends Application {
         gc.setStroke(Color.web("#302010")); gc.setLineWidth(1); gc.strokeLine(200,372,600,372);
         gc.setFill(Color.web("#f1c40f")); gc.setFont(getCustomFont(12, true)); gc.fillText("— C R E D I T S —",W/2.0,394);
         int cy = 416;
-        for (String[] p : new String[][]{{"Game Logic & Design","@pun"},{"Player & Items","@Z3TSUNA"},{"Enemies","@BNiD"}}) {
+        for (String[] p : new String[][]{{"Game by groupkai"}}) {
             gc.setFill(Color.web("#5a4030")); gc.setFont(getCustomFont(12, false)); gc.fillText(p[0]+"   "+p[1],W/2.0,cy); cy+=22;
         }
 
