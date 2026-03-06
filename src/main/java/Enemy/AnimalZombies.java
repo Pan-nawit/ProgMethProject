@@ -1,4 +1,4 @@
-package enemy;
+package Enemy;
 import Player.Player;
 import Status.Bleeding;
 public class AnimalZombies extends BaseEnemy {

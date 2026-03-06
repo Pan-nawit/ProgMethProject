@@ -4,9 +4,9 @@ import Player.Player;
 
 public class Bleeding extends Status {
     private long lastTickTime = 0;
-    private static final long TICK_INTERVAL_MS = 10000; // damage every 10 seconds
+    private static final long TICK_INTERVAL_MS = 10000;
 
-    public Bleeding(){
+    public Bleeding() {
         super("Bleeding");
     }
 
@@ -21,7 +21,7 @@ public class Bleeding extends Status {
         if (now - lastTickTime >= TICK_INTERVAL_MS) {
             if (player.getHp() > 0) {
                 player.setHp(player.getHp() - 1);
-                System.out.println("[Status] Bleeding: Player HP reduced by 1. Current HP: " + player.getHp());
+                System.out.println("[Status] Bleeding: HP -1. Current HP: " + player.getHp());
             }
             lastTickTime = now;
         }

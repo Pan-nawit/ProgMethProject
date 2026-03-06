@@ -9,9 +9,8 @@ import Item.Weapon.Pistol;
 import Item.Weapon.Shotgun;
 import Item.Weapon.Weapon;
 import Player.Player;
-import enemy.BaseEnemy;
-import enemy.*;
-import java.awt.Graphics2D;
+import Enemy.BaseEnemy;
+import Enemy.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -51,12 +50,11 @@ public class GameLogic {
     private final int screenHeight = 500;
 
     public GameLogic()     { initGame(1); }
-    public void initGame() { initGame(1); }
 
     public void initGame(int stage) {
         currentStage         = stage;
         isEndless            = (stage == 4);
-        stageDurationSeconds = stage * 30; // irrelevant for endless
+        stageDurationSeconds = stage * 30;
 
         spawnCooldown = switch (stage) {
             case 1 -> 2000;
@@ -99,7 +97,7 @@ public class GameLogic {
         if (!isEndless && getElapsedSeconds() >= stageDurationSeconds) {
             finalElapsedSeconds = getElapsedSeconds();
             isWon = true;
-            clearAllStatuses();
+            player.getStatusList().forEach(st -> player.removeStatus(st.getName()));
             return;
         }
 
@@ -150,22 +148,12 @@ public class GameLogic {
             }
         }
 
-        // Tick all status effects (game-loop synchronized)
-        for (Status.Status st : player.getStatusList()) {
-            st.tick(player);
-        }
+        new ArrayList<>(player.getStatusList()).forEach(st -> st.tick(player));
 
         if (player.getHp() <= 0) {
             finalElapsedSeconds = getElapsedSeconds();
             isGameOver = true;
-            clearAllStatuses();
-        }
-    }
-
-    private void clearAllStatuses() {
-        List<Status.Status> copy = new ArrayList<>(player.getStatusList());
-        for (Status.Status st : copy) {
-            player.removeStatus(st.getName());
+            player.getStatusList().forEach(st -> player.removeStatus(st.getName()));
         }
     }
 
@@ -232,22 +220,12 @@ public class GameLogic {
         int roll = random.nextInt(100);
 
         Item.Item drop;
-        if (isEndless) {
-            // Endless: more healing + shotgun appears
-            if      (roll < 22) drop = new Medkit();
-            else if (roll < 44) drop = new Bandage();
-            else if (roll < 58) drop = new Pistol();
-            else if (roll < 72) drop = new MachineGun();
-            else if (roll < 86) drop = new Shotgun();
-            else                drop = new Medkit();
-        } else {
-            // Timed stages: shotgun included
-            if      (roll < 20) drop = new Medkit();
-            else if (roll < 40) drop = new Bandage();
-            else if (roll < 60) drop = new Pistol();
-            else if (roll < 80) drop = new MachineGun();
-            else                drop = new Shotgun();
-        }
+        if      (roll < 22) drop = new Medkit();
+        else if (roll < 44) drop = new Bandage();
+        else if (roll < 58) drop = new Pistol();
+        else if (roll < 72) drop = new MachineGun();
+        else if (roll < 86) drop = new Shotgun();
+        else                drop = new Medkit();
 
         drop.setX(ix);
         drop.setY(iy);
@@ -255,9 +233,4 @@ public class GameLogic {
         lastItemDropTime = now;
     }
 
-    public void draw(Graphics2D g) {
-        g.setColor(java.awt.Color.BLUE);
-        g.fillRect(player.getX(), player.getY(), player.getWidth(), player.getHeight());
-        for (BaseEnemy e : enemies) e.draw(g);
-    }
 }

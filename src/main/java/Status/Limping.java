@@ -8,7 +8,7 @@ public class Limping extends Status{
     }
     @Override
     public void apply(Player player) {
-        player.setSpeed(player.getSpeed()/2); // ลดสปีดทันที
+        player.setSpeed(player.getSpeed()/2);
     }
     @Override
     public void undo(Player player) {

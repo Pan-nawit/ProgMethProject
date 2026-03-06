@@ -4,11 +4,7 @@ import Interface.Pickable;
 import Player.Player;
 import Sound.SoundManager;
 
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
 import java.awt.Rectangle;
-import java.net.URL;
 
 public abstract class Item implements Pickable {
     protected String name;
@@ -32,7 +28,7 @@ public abstract class Item implements Pickable {
     }
     @Override
     public void onPickUp(Player player) {
-        player.addItem(this); // เมื่อเก็บไอเทม ให้เพิ่มตัวเองลงใน inventory ของ player
+        player.addItem(this);
         System.out.println("Picked up: " + this.name);
     }
     public abstract void use(Player player);
