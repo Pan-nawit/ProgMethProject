@@ -148,7 +148,7 @@ public class GameLogic {
             }
         }
 
-        player.getStatusList().forEach(st -> st.tick(player));
+        new ArrayList<>(player.getStatusList()).forEach(st -> st.tick(player));
 
         if (player.getHp() <= 0) {
             finalElapsedSeconds = getElapsedSeconds();
