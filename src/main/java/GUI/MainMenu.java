@@ -112,7 +112,9 @@ public class MainMenu {
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(55, 80, 55, 80));
 
-        Label icon  = lbl("☣",  54, C_RED,   true);
+        Label icon = new Label("☣");
+        icon.setFont(Font.font("Arial", FontWeight.BOLD, 90));
+        icon.setTextFill(Color.web(C_RED));
         Label title = lbl("ZOMBAL SURVIVIE", 36, C_TEXT, true);
         Label tag   = lbl("survive · or become one of them", 12, C_MUTED, false);
         Label div   = lbl("───────────────────────────", 11, C_BORDER, false);
@@ -307,10 +309,16 @@ public class MainMenu {
         return box;
     }
 
+    private Font getCustomFont(double size, boolean bold) {
+        Font customFont = Font.loadFont(getClass().getResourceAsStream("/PressStart2P.ttf"), size);
+        if (customFont != null) return customFont;
+        return bold ? Font.font("Monospaced", FontWeight.BOLD, size)
+                : Font.font("Monospaced", size);
+    }
+
     private Label lbl(String text, double size, String color, boolean bold) {
         Label l = new Label(text);
-        l.setFont(bold ? Font.font("Monospaced", FontWeight.BOLD, size)
-                : Font.font("Monospaced", size));
+        l.setFont(getCustomFont(size, bold));
         l.setTextFill(Color.web(color));
         return l;
     }
@@ -318,7 +326,7 @@ public class MainMenu {
     private Button btn(String text, String fg) {
         Button b = new Button(text);
         b.setPrefWidth(246); b.setPrefHeight(44);
-        b.setFont(Font.font("Monospaced", FontWeight.BOLD, 15));
+        b.setFont(getCustomFont(12, true));
         String base  = "-fx-background-color:#0e0a06cc; -fx-text-fill:" + fg
                 + "; -fx-background-radius:5; -fx-border-color:" + fg
                 + "66; -fx-border-width:1; -fx-border-radius:5; -fx-cursor:hand;";

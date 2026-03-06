@@ -201,6 +201,12 @@ public class Player {
 
     public int getSelectedItemIndex() { return selectedItemIndex; }
 
+    public void setSelectedItemIndex(int index) {
+        if (index >= 0) {
+            this.selectedItemIndex = index;
+        }
+    }
+
 
     public float getMouseX() { return mouseX; }
     public float getMouseY() { return mouseY; }

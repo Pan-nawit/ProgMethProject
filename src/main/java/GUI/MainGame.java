@@ -152,7 +152,16 @@ public class MainGame extends Application {
                         }
                     }
                 }
-                case ESCAPE -> showMainMenu();
+                case ESCAPE -> {
+                    if (gameLogic.isWon) {
+                        if (selectedStage == 3) {
+                            if (unlockedStages < 4) unlockedStages = 4;
+                        } else {
+                            if (selectedStage + 1 > unlockedStages) unlockedStages = selectedStage + 1;
+                        }
+                    }
+                    showMainMenu();
+                }
                 case Q -> gameLogic.player.selectPrevItem();
                 case E -> gameLogic.player.selectNextItem();
                 case F -> gameLogic.player.useSelectedConsumable();
@@ -598,6 +607,13 @@ public class MainGame extends Application {
     // ═════════════════════════════════════════════════
     //  Helpers
     // ═════════════════════════════════════════════════
+
+    private Font getCustomFont(double size, boolean bold) {
+        Font customFont = Font.loadFont(getClass().getResourceAsStream("/PressStart2P.ttf"), size);
+        if (customFont != null) return customFont;
+        return bold ? Font.font("Monospaced", FontWeight.BOLD, size)
+                : Font.font("Monospaced", size);
+    }
 
     private Image slotIcon(String n) {
         if (n.contains("pistol"))     return slots.get("gun_slot");
