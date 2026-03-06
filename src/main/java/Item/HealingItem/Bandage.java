@@ -5,7 +5,7 @@ import Player.Player;
 /** Restores 1 HP and clears Bleeding + Limping */
 public class Bandage extends HealingItems {
     public Bandage() {
-        super("Bandage", 1, null, null);
+        super("Bandage", 1);
     }
 
     @Override

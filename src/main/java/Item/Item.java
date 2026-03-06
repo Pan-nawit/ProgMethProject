@@ -2,31 +2,24 @@ package Item;
 
 import Interface.Pickable;
 import Player.Player;
-import java.awt.Rectangle;
+import Sound.SoundManager;
 
-import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import java.awt.image.BufferedImage;
+import java.awt.Rectangle;
 import java.net.URL;
 
 public abstract class Item implements Pickable {
     protected String name;
     protected int amount;
-    protected String imagePath;
-    protected String soundPath;
-    protected BufferedImage image;
     protected int x, y;
     protected int width = 16;
     protected int height = 16;
 
-    public Item(String name,int amount,String imagePath, String soundPath) {
+    public Item(String name, int amount) {
         setName(name);
         setAmount(amount);
-        this.imagePath = imagePath;
-        this.soundPath = soundPath;
-        loadImage();
     }
     public void addAmount(int amount) {
         setAmount(getAmount()+amount);
@@ -44,38 +37,8 @@ public abstract class Item implements Pickable {
     }
     public abstract void use(Player player);
 
-    private void loadImage() {
-        if (imagePath != null && !imagePath.isEmpty()) {
-            try {
-                // ค้นหาไฟล์ภาพจากโฟลเดอร์ res
-                URL imageUrl = getClass().getResource(imagePath);
-                if (imageUrl != null) {
-                    this.image = ImageIO.read(imageUrl);
-                } else {
-                    System.out.println("⚠️ Warning: Image not found at " + imagePath);
-                }
-            } catch (Exception e) {
-                System.out.println("❌ Error loading image: " + e.getMessage());
-            }
-        }
-    }
-    public void playSound() {
-        if (soundPath != null && !soundPath.isEmpty()) {
-            try {
-                // ค้นหาไฟล์เสียงจากโฟลเดอร์ res
-                URL soundUrl = getClass().getResource(soundPath);
-                if (soundUrl != null) {
-                    AudioInputStream audioIn = AudioSystem.getAudioInputStream(soundUrl);
-                    Clip clip = AudioSystem.getClip();
-                    clip.open(audioIn);
-                    clip.start(); // สั่งเล่นเสียง
-                } else {
-                    System.out.println("⚠️ Warning: Sound not found at " + soundPath);
-                }
-            } catch (Exception e) {
-                System.out.println("❌ Error playing sound: " + e.getMessage());
-            }
-        }
+    public static void playGunSound() {
+        SoundManager.getInstance().playSFX("/Sound/Gun/gunshot.wav");
     }
 
     public String getName() {
@@ -95,5 +58,4 @@ public abstract class Item implements Pickable {
     public void setX(int x) { this.x = x; }
     public void setY(int y) { this.y = y; }
     public Rectangle getBounds() { return new Rectangle(x, y, width, height); }
-    public BufferedImage getImage() { return image; }
 }

@@ -2,6 +2,7 @@ package GUI;
 
 import GameLogic.GameLogic;
 import Item.Item;
+import Sound.SoundManager;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -18,16 +19,9 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * MainGame — full sprite-driven UI using the Zombie Apocalypse Tileset assets.
- *
- * Drop the "assets/" folder (from the output bundle) next to your project
- * root / JAR so Java can resolve  assets/terrain_0.png  etc.
- */
 public class MainGame extends Application {
 
     // ── Stage state ───────────────────────────────────
@@ -46,22 +40,19 @@ public class MainGame extends Application {
     public static final int H      = 600;
     public static final int HUD_H  = 54;
     public static final int IBAR_H = 60;
-    public static final int PLAY_H = H - HUD_H - IBAR_H;   // 486
-    public static final int[] STAGE_SEC = {30, 60, 90, -1};  // -1 = endless
+    public static final int PLAY_H = H - HUD_H - IBAR_H;
+    public static final int[] STAGE_SEC = {30, 60, 90, -1};
 
     // ── Animation ─────────────────────────────────────
     private long animTick = 0, lastAnimNs = 0;
     private static final long FRAME_NS = 110_000_000L;
 
-    // ── Asset root ────────────────────────────────────
-    private static final String A = "assets/";
+    // ── Sprites ───────────────────────────────────────
+    private Image[] terrain, playerWalk;
+    private final Map<String, Image> enemyImages = new HashMap<>();
+    private final Map<String, Image> slots       = new HashMap<>();
+    private final Map<String, Image> pickups     = new HashMap<>();
 
-    // ── Sprite arrays ─────────────────────────────────
-    private Image[] terrain, playerWalk, zSkinny, zBig, zKid, blood, explosion, tree;
-    private final Map<String, Image> slots   = new HashMap<>();
-    private final Map<String, Image> pickups = new HashMap<>();
-
-    // Pickup sprite indices (identified by visual inspection of the tileset)
     private static final int P_PISTOL     = 4;
     private static final int P_MACHINEGUN = 10;
     private static final int P_MEDKIT     = 13;
@@ -87,38 +78,38 @@ public class MainGame extends Application {
     // ═════════════════════════════════════════════════
 
     private void loadAssets() {
-        terrain    = arr("terrain_",   4);
-        playerWalk = arr("player_",    9);
-        zSkinny    = arr("z_skinny_",  9);
-        zBig       = arr("z_big_",     9);
-        zKid       = arr("z_kid_",     9);
-        blood      = arr("blood_",     5);
-        explosion  = arr("explosion_", 6);
-        tree       = arr("tree_",      9);
+        // Enemy sprites — keyed by class simple name (exact match)
+        enemyImages.put("zombie",        img("/Images/enemy/zombie.png"));
+        enemyImages.put("Runners",       img("/Images/enemy/runners.png"));
+        enemyImages.put("Screamers",     img("/Images/enemy/screamers.png"));
+        enemyImages.put("SlowZombie",    img("/Images/enemy/slowzombie.png"));
+        enemyImages.put("HeavyZombie",   img("/Images/enemy/heavyzombie.png"));
+        enemyImages.put("juggernaut",    img("/Images/enemy/juggernaut.png"));
+        enemyImages.put("AnimalZombies", img("/Images/enemy/animalzombies.png"));
 
-        for (String n : new String[]{
-                "empty_slot","using_slot","gun_slot","shotgun_slot",
-                "health_kit_slot","medicine_slot","double_ammo_slot",
-                "single_ammo_slot","knife_slot","grenade_slot","coke_slot"}) {
-            Image i = img(A + "slot_" + n + ".png");
-            if (i != null) slots.put(n, i);
-        }
+        // Player
+        playerWalk = new Image[]{ img("/Images/Player/player.png") };
 
-        for (int i = 0; i <= 19; i++) {
-            Image im = img(A + "pickup_" + i + ".png");
-            if (im != null) pickups.put(String.valueOf(i), im);
-        }
-    }
+        // Item slot icons
+        slots.put("gun_slot",         img("/Images/Gun/Pistol.png"));
+        slots.put("double_ammo_slot", img("/Images/Gun/Machinegun.png"));
+        slots.put("shotgun_slot",     img("/Images/Gun/Shotgun.png"));
+        slots.put("health_kit_slot",  img("/Images/HealingItems/medkit.png"));
+        slots.put("medicine_slot",    img("/Images/HealingItems/bandage.png"));
 
-    private Image[] arr(String prefix, int n) {
-        Image[] a = new Image[n];
-        for (int i = 0; i < n; i++) a[i] = img(A + prefix + i + ".png");
-        return a;
+        // Ground pickups
+        pickups.put(String.valueOf(P_PISTOL),     img("/Images/Gun/Pistol.png"));
+        pickups.put(String.valueOf(P_MACHINEGUN), img("/Images/Gun/Machinegun.png"));
+        pickups.put(String.valueOf(P_SHOTGUN),    img("/Images/Gun/Shotgun.png"));
+        pickups.put(String.valueOf(P_MEDKIT),     img("/Images/HealingItems/medkit.png"));
+        pickups.put(String.valueOf(P_MEDICINE),   img("/Images/HealingItems/bandage.png"));
     }
 
     private Image img(String path) {
-        try { File f = new File(path); return f.exists() ? new Image(f.toURI().toString()) : null; }
-        catch (Exception e) { return null; }
+        try {
+            var stream = getClass().getResourceAsStream(path);
+            return stream != null ? new Image(stream) : null;
+        } catch (Exception e) { return null; }
     }
 
     // ═════════════════════════════════════════════════
@@ -127,13 +118,17 @@ public class MainGame extends Application {
 
     void showMainMenu() {
         if (loop != null) loop.stop();
+        SoundManager.getInstance().playBGM("/Sound/BGM/menu.wav");
         stage.setScene(new MainMenu(stage, this::startGame, terrain, playerWalk).buildScene());
     }
 
     public void startGame() {
+        if (loop != null) loop.stop();
         gameLogic = new GameLogic();
         gameLogic.initGame(selectedStage);
         animTick = 0;
+
+        SoundManager.getInstance().playBGM("/Sound/BGM/game.wav");
 
         Canvas canvas = new Canvas(W, H);
         Scene sc = new Scene(new StackPane(canvas));
@@ -143,13 +138,11 @@ public class MainGame extends Application {
             switch (e.getCode()) {
                 case W -> w = true;  case A -> a = true;
                 case S -> s = true;  case D -> d = true;
-                case R -> {
+                case ENTER -> {
                     if (gameLogic.isGameOver) {
-                        // Endless: R restarts endless; timed: R restarts same stage
                         startGame();
                     } else if (gameLogic.isWon) {
                         if (selectedStage == 3) {
-                            // Unlock endless (stage 4) and go to credits
                             if (unlockedStages < 4) unlockedStages = 4;
                             showCredits();
                         } else {
@@ -159,9 +152,25 @@ public class MainGame extends Application {
                         }
                     }
                 }
-                case ESCAPE -> showMainMenu();
-                case Q -> gameLogic.player.selectPrevItem();
-                case E -> gameLogic.player.selectNextItem();
+                case ESCAPE -> {
+                    // Check if they won before they quit to the menu
+                    if (gameLogic.isWon) {
+                        if (selectedStage == 3) {
+                            if (unlockedStages < 4) unlockedStages = 4;
+                        } else {
+                            if (selectedStage + 1 > unlockedStages) unlockedStages = selectedStage + 1;
+                        }
+                    }
+                    showMainMenu(); // Now it safely goes to the menu WITH the new stage unlocked
+                }
+
+                // 🌟 UPDATE: Changed Q/E logic to 1,2,3,4,5,6 keys
+                case DIGIT1 -> gameLogic.player.setSelectedItemIndex(0);
+                case DIGIT2 -> gameLogic.player.setSelectedItemIndex(1);
+                case DIGIT3 -> gameLogic.player.setSelectedItemIndex(2);
+                case DIGIT4 -> gameLogic.player.setSelectedItemIndex(3);
+                case DIGIT5 -> gameLogic.player.setSelectedItemIndex(4);
+
                 case F -> gameLogic.player.useSelectedConsumable();
             }
         });
@@ -190,13 +199,13 @@ public class MainGame extends Application {
 
     private void showCredits() {
         if (loop != null) loop.stop();
-        // Completing stage 3 always unlocks stage 4 (endless)
+        SoundManager.getInstance().stopBGM();
         if (unlockedStages < 4) unlockedStages = 4;
         Canvas c = new Canvas(W, H);
         Scene sc = new Scene(new StackPane(c));
         drawCredits(c.getGraphicsContext2D());
         sc.setOnKeyPressed(e -> {
-            if (e.getCode() == javafx.scene.input.KeyCode.R ||
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER ||
                     e.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
                 selectedStage = 1; showMainMenu();
             }
@@ -238,7 +247,6 @@ public class MainGame extends Application {
                 }
             }
         }
-        // Arena border
         gc.setStroke(Color.web("#5a0a0a", 0.8)); gc.setLineWidth(3);
         gc.strokeRect(1.5, HUD_H + 1.5, W - 3, PLAY_H - 3);
     }
@@ -248,26 +256,22 @@ public class MainGame extends Application {
     // ─────────────────────────────────────────────────
 
     private void drawEntities(GraphicsContext gc) {
-        // Ground items — real pickup sprites
+        // Ground items
         for (var item : gameLogic.itemsOnGround) {
             int ix = item.getX(), iy = item.getY() + HUD_H;
-            double pulse = Math.abs(Math.sin(animTick * 0.3));  // 0.0–1.0, never negative
+            double pulse = Math.abs(Math.sin(animTick * 0.3));
 
-            // Glow halo
             gc.setFill(Color.web("#f0c030", 0.18 * pulse));
             gc.fillOval(ix - 8, iy - 4, 36, 32);
 
-            // Sprite
             Image pi = pickups.get(String.valueOf(pickupIdx(item.getName())));
             if (pi != null) {
-                double pw = Math.min(pi.getWidth(), 48), ph = Math.min(pi.getHeight(), 48);
-                gc.drawImage(pi, ix + (24 - pw) / 2.0, iy + (24 - ph) / 2.0, pw, ph);
+                gc.drawImage(pi, ix, iy, 24, 24); // fixed 24x24
             } else {
                 gc.setFill(itemColor(item.getName()));
                 gc.fillRoundRect(ix, iy, 22, 22, 4, 4);
             }
 
-            // Gold border
             gc.setStroke(Color.web("#c8a020", 0.7 * pulse)); gc.setLineWidth(1);
             gc.strokeRoundRect(ix - 1, iy - 1, 26, 26, 4, 4);
         }
@@ -279,32 +283,26 @@ public class MainGame extends Application {
             gc.setFill(Color.web("#fff8c0")); gc.fillOval(bx-2, by-2, 4, 4);
         }
 
-        // Enemies
+        // Enemies — lookup by exact class name, no frame animation
         for (var enemy : gameLogic.enemies) {
             int ex = enemy.getX(), ey = enemy.getY() + HUD_H;
             int ew = enemy.getWidth(), eh = enemy.getHeight();
-            String cls = enemy.getClass().getSimpleName().toLowerCase();
+            String cls = enemy.getClass().getSimpleName();
 
-            // Shadow
             gc.setFill(Color.web("#000000", 0.38));
             gc.fillOval(ex + ew/4, ey + eh - 6, ew/2, 9);
 
-            // Sprite
-            Image[] frames;
             int dw = ew, dh = eh;
-            if (cls.contains("juggernaut"))  { frames = zBig;    dw = 48; dh = 48; }
-            else if (cls.contains("kid") ||
-                    cls.contains("animal")) { frames = zKid;    dw = 28; dh = 28; }
-            else                             { frames = zSkinny; }
+            if (cls.equals("juggernaut"))    { dw = 48; dh = 48; }
+            if (cls.equals("AnimalZombies")) { dw = 28; dh = 28; }
 
-            int ef = (int)(animTick % (frames != null ? frames.length : 1));
-            if (frames != null && frames[ef % frames.length] != null)
-                gc.drawImage(frames[ef % frames.length], ex, ey, dw, dh);
+            Image eImg = enemyImages.get(cls);
+            if (eImg != null)
+                gc.drawImage(eImg, ex, ey, dw, dh);
             else {
                 gc.setFill(enemy.getEnemyColor()); gc.fillRoundRect(ex, ey, ew, eh, 4, 4);
             }
 
-            // HP bar above entity
             double hp = (double) enemy.getHP() / Math.max(enemy.getMaxHp(), 1);
             gc.setFill(Color.web("#000000", 0.75));
             gc.fillRoundRect(ex - 2, ey - 11, ew + 4, 7, 2, 2);
@@ -319,9 +317,9 @@ public class MainGame extends Application {
         gc.setFill(Color.web("#000000", 0.42));
         gc.fillOval(px + 6, py + ph - 5, pw - 12, 9);
 
-        boolean moving = w || a || s || d;
-        int pf = moving ? (int)(animTick % 9) : 0;
-        if (playerWalk != null && playerWalk[pf] != null)
+        int pf = (playerWalk != null && playerWalk.length > 0 && (w || a || s || d))
+                ? (int)(animTick % playerWalk.length) : 0;
+        if (playerWalk != null && playerWalk.length > 0 && playerWalk[pf] != null)
             gc.drawImage(playerWalk[pf], px, py, pw, ph);
         else {
             gc.setFill(Color.web("#3498db")); gc.fillRoundRect(px, py, pw, ph, 5, 5);
@@ -347,30 +345,29 @@ public class MainGame extends Application {
     private void drawHud(GraphicsContext gc) {
         boolean endless = gameLogic.isEndless;
         boolean ended   = gameLogic.isGameOver || gameLogic.isWon;
-        // Use the snapshotted time when game has ended so the HUD timer freezes
-        int elapsed = ended ? (int) gameLogic.finalElapsedSeconds
-                : (int) gameLogic.getElapsedSeconds();
+        int elapsed = ended ? (int) gameLogic.finalElapsedSeconds : (int) gameLogic.getElapsedSeconds();
         int dur = endless ? -1 : STAGE_SEC[selectedStage - 1];
         int rem = endless ? elapsed : Math.max(0, dur - elapsed);
         boolean urgent = !endless && rem <= 10;
 
-        // Panel
         gc.setFill(Color.web("#0a0806", 0.97)); gc.fillRect(0, 0, W, HUD_H);
         gc.setStroke(Color.web("#6e1010", 0.9)); gc.setLineWidth(2);
         gc.strokeLine(0, HUD_H, W, HUD_H);
 
-        // ── HP hearts ─────────────────────────────
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 8));
-        gc.setFill(Color.web("#4a3020")); gc.fillText("HEALTH", 12, 13);
+        // 🌟 UPDATE: Y adjusted slightly down
+        gc.setFont(getCustomFont(8, true));
+        gc.setFill(Color.web("#4a3020")); gc.fillText("HEALTH", 12, 16);
+
+        // 🌟 UPDATE: Hearts size scaled up and spaced out slightly
         int hp = gameLogic.player.getHp();
         for (int i = 0; i < 5; i++) {
-            gc.setFont(Font.font("Arial", 22));
+            gc.setFont(Font.font("Arial", 30));
             gc.setFill(i < hp ? Color.web("#c0392b") : Color.web("#2a1008"));
-            gc.fillText(i < hp ? "♥" : "♡", 10 + i * 24, 42);
+            gc.fillText(i < hp ? "♥" : "♡", 10 + i * 28, 46);
         }
 
         // Status badges
-        int bx = 140;
+        int bx = 160;
         for (var st : gameLogic.player.getStatusList()) {
             boolean bleed = st.getName().equalsIgnoreCase("bleeding");
             gc.setFill(Color.web(bleed ? "#5a0808" : "#2a1a08", 0.95));
@@ -378,45 +375,49 @@ public class MainGame extends Application {
             gc.setStroke(Color.web(bleed ? "#c0392b" : "#c07830", 0.45));
             gc.setLineWidth(1); gc.strokeRoundRect(bx, 11, 72, 18, 5, 5);
             gc.setFill(Color.web(bleed ? "#ffaaaa" : "#ffd090"));
-            gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 9));
+            gc.setFont(getCustomFont(9, true));
             gc.fillText((bleed ? "🩸 " : "🦵 ") + st.getName().toUpperCase(), bx + 5, 23);
             bx += 78;
         }
 
-        // ── Timer (center) ─────────────────────────
+        // Timer (center)
         gc.setTextAlign(TextAlignment.CENTER);
         gc.setFill(Color.web("#4a3020"));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 9));
-        gc.fillText("STAGE " + selectedStage + "  ·  " + diffLabel(), W / 2.0, 13);
+        gc.setFont(getCustomFont(8, true));
+        // 🌟 UPDATE: Moved Y down so it is not cut off by the title bar
+        gc.fillText("STAGE " + selectedStage + "  -  " + diffLabel(), W / 2.0, 15);
 
-        // Timer value — count-up (green) for endless, count-down for timed
         gc.setFill(endless ? Color.web("#27ae60") : (urgent ? Color.web("#e74c3c") : Color.web("#d8cfc0")));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 30));
-        gc.fillText(fmtTime(rem), W / 2.0, 43);
+        // 🌟 UPDATE: Shrunk timer font (ย่อ) and adjusted Y to compensate
+        gc.setFont(getCustomFont(20, true));
+        gc.fillText(fmtTime(rem), W / 2.0, 40);
 
-        // Progress / pulse bar
-        int bw = 160;
+        // 🌟 UPDATE: Stretched timer bar (ยืด), and made it taller
+        int bw = 240; // width
+        int bh = 5;   // height
+        int by = HUD_H - 10; // y pos
+
         gc.setFill(Color.web("#1a1008"));
-        gc.fillRoundRect(W / 2.0 - bw / 2.0, HUD_H - 7, bw, 4, 2, 2);
+        gc.fillRoundRect(W / 2.0 - bw / 2.0, by, bw, bh, 3, 3);
         if (endless) {
-            // Pulsing green bar for endless
-            double pulse = Math.abs(Math.sin(animTick * 0.2));  // 0.0–1.0
+            double pulse = Math.abs(Math.sin(animTick * 0.2));
             gc.setFill(Color.web("#27ae60", 0.4 + 0.6 * pulse));
-            gc.fillRoundRect(W / 2.0 - bw / 2.0, HUD_H - 7, bw, 4, 2, 2);
+            gc.fillRoundRect(W / 2.0 - bw / 2.0, by, bw, bh, 3, 3);
         } else {
             gc.setFill(urgent ? Color.web("#c0392b") : Color.web("#27ae60"));
-            gc.fillRoundRect(W / 2.0 - bw / 2.0, HUD_H - 7, bw * ((double) rem / dur), 4, 2, 2);
+            gc.fillRoundRect(W / 2.0 - bw / 2.0, by, bw * ((double) rem / dur), bh, 3, 3);
         }
         gc.setTextAlign(TextAlignment.LEFT);
 
-        // ── Score + wave (right) ───────────────────
+        // Score + wave (right)
         gc.setTextAlign(TextAlignment.RIGHT);
         gc.setFill(Color.web("#f1c40f"));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 19));
-        gc.fillText("$  " + gameLogic.score, W - 12, 29);
+        // 🌟 UPDATE: Replaced '$' with 'Score: ' and adjusted size
+        gc.setFont(getCustomFont(16, true));
+        gc.fillText("Score: " + gameLogic.score, W - 12, 26);
         gc.setFill(Color.web("#4a3020"));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 10));
-        gc.fillText("WAVE  " + gameLogic.wave, W - 12, 46);
+        gc.setFont(getCustomFont(10, true));
+        gc.fillText("WAVE  " + gameLogic.wave, W - 12, 44);
         gc.setTextAlign(TextAlignment.LEFT);
     }
 
@@ -426,15 +427,13 @@ public class MainGame extends Application {
 
     private void drawItemBar(GraphicsContext gc) {
         int barY = H - IBAR_H;
-        var inv   = gameLogic.player.getInventory();
-        int sel   = gameLogic.player.getSelectedItemIndex();
+        var inv = gameLogic.player.getInventory();
+        int sel = gameLogic.player.getSelectedItemIndex();
 
-        // Panel
         gc.setFill(Color.web("#0a0806", 0.97)); gc.fillRect(0, barY, W, IBAR_H);
         gc.setStroke(Color.web("#6e1010", 0.8)); gc.setLineWidth(2);
         gc.strokeLine(0, barY, W, barY);
 
-        // 6 centered slots
         int slotW = 56, slotH = 50, gap = 6;
         int startX = (W - (6 * slotW + 5 * gap)) / 2;
 
@@ -443,7 +442,6 @@ public class MainGame extends Application {
             int sy = barY + 5;
             boolean isSel = (i == sel);
 
-            // Slot background — real asset
             Image bg = isSel ? slots.get("using_slot") : slots.get("empty_slot");
             if (bg != null) {
                 gc.drawImage(bg, sx, sy, slotW, slotH);
@@ -455,16 +453,14 @@ public class MainGame extends Application {
                 gc.strokeRoundRect(sx, sy, slotW, slotH, 5, 5);
             }
 
-            // Slot number
             gc.setFill(isSel ? Color.web("#f1c40f", 0.9) : Color.web("#3a2010", 0.9));
-            gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 8));
+            gc.setFont(getCustomFont(8, true));
             gc.fillText(String.valueOf(i + 1), sx + 3, sy + 10);
 
             if (i < inv.size()) {
                 Item item = inv.get(i);
                 String name = item.getName().toLowerCase();
 
-                // Item icon — real slot sprite
                 Image icon = slotIcon(name);
                 if (icon != null)
                     gc.drawImage(icon, sx + 4, sy + 8, slotW - 8, slotH - 16);
@@ -473,28 +469,28 @@ public class MainGame extends Application {
                     gc.fillRoundRect(sx + 10, sy + 12, slotW - 20, slotH - 24, 3, 3);
                 }
 
-                // Name label
                 gc.setTextAlign(TextAlignment.CENTER);
-                gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 7));
+                gc.setFont(getCustomFont(7, true));
                 gc.setFill(isSel ? Color.web("#f1c40f") : Color.web("#7a6040"));
                 gc.fillText(name.substring(0, Math.min(7, name.length())).toUpperCase(),
                         sx + slotW / 2.0, sy + slotH - 7);
 
-                // Ammo badge
                 gc.setFill(Color.web("#000000", 0.78));
                 gc.fillRoundRect(sx + slotW - 17, sy + 2, 16, 10, 2, 2);
                 gc.setFill(isSel ? Color.web("#f1c40f") : Color.web("#8a6840"));
-                gc.setFont(Font.font("Monospaced", 7));
+                gc.setFont(getCustomFont(7, false));
                 gc.fillText(String.valueOf(item.getAmount()), sx + slotW - 9, sy + 10);
                 gc.setTextAlign(TextAlignment.LEFT);
             }
         }
 
-        // Key hints on the left
+        // Key hints
         gc.setFill(Color.web("#2e1808"));
-        gc.setFont(Font.font("Monospaced", 8));
+        gc.setFont(getCustomFont(8, false));
         int hx = 12, hy = barY + 14;
-        for (String hint : new String[]{"Q/E  switch","F    use","R    restart","ESC  menu"}) {
+
+        // 🌟 UPDATE: Adjusted hints text here for the new keys.
+        for (String hint : new String[]{"1-6   switch","F     use","ENTER restart","ESC   menu"}) {
             gc.fillText(hint, hx, hy); hy += 12;
         }
     }
@@ -537,68 +533,56 @@ public class MainGame extends Application {
         if (!gameLogic.isGameOver && !gameLogic.isWon) return;
         gc.setFill(Color.web("#000000", 0.82)); gc.fillRect(0, 0, W, H);
 
-        boolean endless  = gameLogic.isEndless;
-        boolean died     = gameLogic.isGameOver;
-
-        // For endless mode death = "survived X time" shown with green panel (like a clear)
+        boolean endless = gameLogic.isEndless;
+        boolean died    = gameLogic.isGameOver;
         boolean showGreen = !died || endless;
 
-        String col   = showGreen ? "#27ae60" : "#c0392b";
+        String col = showGreen ? "#27ae60" : "#c0392b";
         String title, sub, hint;
 
         if (endless && died) {
-            // Endless death → show how long they survived (frozen at death)
             int secs = (int) gameLogic.finalElapsedSeconds;
             title = "YOU SURVIVED";
             sub   = "Time: " + fmtTime(secs) + "  ·  Score  " + gameLogic.score;
-            hint  = "[ R ] Play Again    [ ESC ] Menu";
+            hint  = "[ ENTER ] Play Again    [ ESC ] Menu";
         } else if (!died) {
-            // Timed stage clear
             title = "SURVIVED!";
             sub   = "Stage " + selectedStage + " Clear  ·  Score  " + gameLogic.score;
-            hint  = (selectedStage == 3 ? "[ R ] Credits" : "[ R ] Next Stage") + "    [ ESC ] Menu";
+            hint  = (selectedStage == 3 ? "[ ENTER ] Credits" : "[ ENTER ] Next Stage") + "    [ ESC ] Menu";
         } else {
-            // Timed stage death
             title = "YOU DIED";
             sub   = "Score   " + gameLogic.score;
-            hint  = "[ R ] Restart    [ ESC ] Menu";
+            hint  = "[ ENTER ] Restart    [ ESC ] Menu";
         }
 
         int pw = 500, ph = endless && died ? 175 : 155;
         int px = (W - pw) / 2, py = (H - ph) / 2;
 
-        // Panel
         gc.setFill(Color.web("#080604", 0.98)); gc.fillRoundRect(px, py, pw, ph, 10, 10);
         gc.setStroke(Color.web(col, 0.80)); gc.setLineWidth(2.5); gc.strokeRoundRect(px, py, pw, ph, 10, 10);
-
-        // Inner glow stripe at top
         gc.setFill(Color.web(col, 0.08)); gc.fillRoundRect(px, py, pw, 38, 10, 10);
 
         gc.setTextAlign(TextAlignment.CENTER);
-
-        // Title
         gc.setFill(Color.web(col));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 38));
+        gc.setFont(getCustomFont(38, true));
         gc.fillText(title, W / 2.0, py + 48);
 
-        // For endless survived — show big time prominently
         if (endless && died) {
             int secs = (int) gameLogic.finalElapsedSeconds;
             gc.setFill(Color.web("#ffffff", 0.95));
-            gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 24));
+            gc.setFont(getCustomFont(24, true));
             gc.fillText(fmtTime(secs), W / 2.0, py + 80);
             gc.setFill(Color.web("#c8bfb0"));
-            gc.setFont(Font.font("Monospaced", 12));
+            gc.setFont(getCustomFont(12, false));
             gc.fillText("Score  " + gameLogic.score + "  ·  Wave  " + gameLogic.wave, W / 2.0, py + 102);
             gc.setFill(Color.web("#5a4030"));
-            gc.setFont(Font.font("Monospaced", 10));
+            gc.setFont(getCustomFont(10, false));
             gc.fillText(hint, W / 2.0, py + 126);
         } else {
-            gc.setFill(Color.web("#c8bfb0")); gc.setFont(Font.font("Monospaced", 13)); gc.fillText(sub, W / 2.0, py + 85);
-            gc.setFill(Color.web("#5a4030")); gc.setFont(Font.font("Monospaced", 10)); gc.fillText(hint, W / 2.0, py + 110);
+            gc.setFill(Color.web("#c8bfb0")); gc.setFont(getCustomFont(13, false)); gc.fillText(sub, W / 2.0, py + 85);
+            gc.setFill(Color.web("#5a4030")); gc.setFont(getCustomFont(10, false)); gc.fillText(hint, W / 2.0, py + 110);
         }
 
-        // Accent line at panel bottom
         gc.setStroke(Color.web(col, 0.25)); gc.setLineWidth(1);
         gc.strokeLine(px + 24, py + ph - 14, px + pw - 24, py + ph - 14);
         gc.setTextAlign(TextAlignment.LEFT);
@@ -623,24 +607,36 @@ public class MainGame extends Application {
 
         gc.setTextAlign(TextAlignment.CENTER);
         gc.setFill(Color.web("#27ae60",0.12)); gc.fillOval(250,20,300,300);
+
         gc.setFill(Color.web("#27ae60")); gc.setFont(Font.font("Arial",FontWeight.BOLD,68)); gc.fillText("☣",W/2.0,215);
-        gc.setFill(Color.web("#27ae60")); gc.setFont(Font.font("Monospaced",FontWeight.BOLD,30)); gc.fillText("CONGRATULATIONS!",W/2.0,276);
-        gc.setFill(Color.web("#c8bfb0")); gc.setFont(Font.font("Monospaced",14)); gc.fillText("You survived all 3 stages.",W/2.0,306);
-        gc.setFill(Color.web("#c0392b")); gc.setFont(Font.font("Monospaced",FontWeight.BOLD,13)); gc.fillText("You don't get infected.",W/2.0,330);
-        gc.setFill(Color.web("#9b59b6")); gc.setFont(Font.font("Monospaced",FontWeight.BOLD,12)); gc.fillText("✦  STAGE 4 — ENDLESS MODE UNLOCKED  ✦",W/2.0,355);
+
+        gc.setFill(Color.web("#27ae60")); gc.setFont(getCustomFont(30, true)); gc.fillText("CONGRATULATIONS!",W/2.0,276);
+        gc.setFill(Color.web("#c8bfb0")); gc.setFont(getCustomFont(14, false)); gc.fillText("You survived all 3 stages.",W/2.0,306);
+        gc.setFill(Color.web("#c0392b")); gc.setFont(getCustomFont(13, true)); gc.fillText("You don't get infected.",W/2.0,330);
+        gc.setFill(Color.web("#9b59b6")); gc.setFont(getCustomFont(12, true)); gc.fillText("✦  STAGE 4 — ENDLESS MODE UNLOCKED  ✦",W/2.0,355);
         gc.setStroke(Color.web("#302010")); gc.setLineWidth(1); gc.strokeLine(200,372,600,372);
-        gc.setFill(Color.web("#f1c40f")); gc.setFont(Font.font("Monospaced",FontWeight.BOLD,12)); gc.fillText("— C R E D I T S —",W/2.0,394);
+        gc.setFill(Color.web("#f1c40f")); gc.setFont(getCustomFont(12, true)); gc.fillText("— C R E D I T S —",W/2.0,394);
         int cy = 416;
         for (String[] p : new String[][]{{"Game Logic & Design","@pun"},{"Player & Items","@Z3TSUNA"},{"Enemies","@BNiD"}}) {
-            gc.setFill(Color.web("#5a4030")); gc.setFont(Font.font("Monospaced",12)); gc.fillText(p[0]+"   "+p[1],W/2.0,cy); cy+=22;
+            gc.setFill(Color.web("#5a4030")); gc.setFont(getCustomFont(12, false)); gc.fillText(p[0]+"   "+p[1],W/2.0,cy); cy+=22;
         }
-        gc.setFill(Color.web("#302010")); gc.setFont(Font.font("Monospaced",10)); gc.fillText("[ R ] or [ ESC ]  →  Main Menu",W/2.0,H-18);
+
+        gc.setFill(Color.web("#302010")); gc.setFont(getCustomFont(10, false)); gc.fillText("[ ENTER ] or [ ESC ]  →  Main Menu",W/2.0,H-18);
         gc.setTextAlign(TextAlignment.LEFT);
     }
 
     // ═════════════════════════════════════════════════
     //  Helpers
     // ═════════════════════════════════════════════════
+
+    private Font getCustomFont(double size, boolean bold) {
+        Font customFont = Font.loadFont(getClass().getResourceAsStream("/PressStart2P.ttf"), size);
+        if (customFont != null) {
+            return customFont;
+        }
+        return bold ? Font.font("Monospaced", FontWeight.BOLD, size)
+                : Font.font("Monospaced", size);
+    }
 
     private Image slotIcon(String n) {
         if (n.contains("pistol"))     return slots.get("gun_slot");
@@ -674,7 +670,10 @@ public class MainGame extends Application {
 
     private String fmtTime(int s) { return String.format("%d:%02d", s/60, s%60); }
     private String diffLabel() {
-        return switch (selectedStage) { case 1->"EASY · 30s"; case 2->"MEDIUM · 60s"; case 3->"HARD · 90s"; case 4->"ENDLESS ∞"; default->""; };
+        return switch (selectedStage) {
+            case 1 -> "EASY · 30s"; case 2 -> "MEDIUM · 60s";
+            case 3 -> "HARD · 90s"; case 4 -> "ENDLESS ∞"; default -> "";
+        };
     }
 
     Image[] getTerrainTiles() { return terrain; }

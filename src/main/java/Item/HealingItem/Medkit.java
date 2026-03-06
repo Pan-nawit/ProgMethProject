@@ -5,7 +5,7 @@ import Player.Player;
 /** Restores 3 HP */
 public class Medkit extends HealingItems {
     public Medkit() {
-        super("Medkit", 1, null, null);
+        super("Medkit", 1);
     }
 
     @Override

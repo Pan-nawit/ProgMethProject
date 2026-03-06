@@ -1,10 +1,17 @@
 package Player;
 import Item.Item;
 import Item.Weapon.Weapon;
+import Sound.SoundManager;
 import Status.Status;
+
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.awt.Rectangle;
+
 public class Player {
     private int hp;
     private int speed;
@@ -82,11 +89,9 @@ public class Player {
     }
     public void onAttacked(int damage, Status incomingStatus) {
         setHp(getHp() - damage);
-        if (incomingStatus != null) {
-            if (!hasStatus(incomingStatus.getName())) {
-                addStatus(incomingStatus);
-            }
-        }
+        SoundManager.getInstance().playSFX("/Sound/Player/classic_hurt.wav");
+        if (incomingStatus != null && !hasStatus(incomingStatus.getName()))
+            addStatus(incomingStatus);
     }
     public void applyKnockback(int force) {
         switch (lastFacing) {
@@ -196,8 +201,16 @@ public class Player {
 
     public int getSelectedItemIndex() { return selectedItemIndex; }
 
-
     public float getMouseX() { return mouseX; }
     public float getMouseY() { return mouseY; }
     public void setMousePos(float x, float y) { this.mouseX = x; this.mouseY = y; }
+    public double getMaxRecoil() { return maxRecoil; }
+
+    public void setSelectedItemIndex(int index) {
+        // Allows keys 1-5 to change the slot directly
+        if (index >= 0) {
+            this.selectedItemIndex = index;
+        }
+    }
+
 }
