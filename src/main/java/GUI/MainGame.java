@@ -53,6 +53,9 @@ public class MainGame extends Application {
     private final Map<String, Image> slots       = new HashMap<>();
     private final Map<String, Image> pickups     = new HashMap<>();
 
+    // ── Font cache ────────────────────────────────────
+    private final Map<String, Font> fontCache = new HashMap<>();
+
     private static final int P_PISTOL     = 4;
     private static final int P_MACHINEGUN = 10;
     private static final int P_MEDKIT     = 13;
@@ -69,6 +72,7 @@ public class MainGame extends Application {
         primaryStage.setTitle("Zombal Survivie");
         primaryStage.setResizable(false);
         loadAssets();
+        preloadFonts();
         showMainMenu();
         primaryStage.show();
     }
@@ -103,6 +107,14 @@ public class MainGame extends Application {
         pickups.put(String.valueOf(P_SHOTGUN),    img("/Images/Gun/Shotgun.png"));
         pickups.put(String.valueOf(P_MEDKIT),     img("/Images/HealingItems/medkit.png"));
         pickups.put(String.valueOf(P_MEDICINE),   img("/Images/HealingItems/bandage.png"));
+    }
+
+    private void preloadFonts() {
+        double[] sizes = {7, 8, 9, 10, 12, 13, 14, 16, 20, 24, 30, 38};
+        for (double size : sizes) {
+            getCustomFont(size, true);
+            getCustomFont(size, false);
+        }
     }
 
     private Image img(String path) {
@@ -162,8 +174,11 @@ public class MainGame extends Application {
                     }
                     showMainMenu();
                 }
-                case Q -> gameLogic.player.selectPrevItem();
-                case E -> gameLogic.player.selectNextItem();
+                case DIGIT1 -> gameLogic.player.setSelectedItemIndex(0);
+                case DIGIT2 -> gameLogic.player.setSelectedItemIndex(1);
+                case DIGIT3 -> gameLogic.player.setSelectedItemIndex(2);
+                case DIGIT4 -> gameLogic.player.setSelectedItemIndex(3);
+                case DIGIT5 -> gameLogic.player.setSelectedItemIndex(4);
                 case F -> gameLogic.player.useSelectedConsumable();
             }
         });
@@ -358,17 +373,20 @@ public class MainGame extends Application {
         }
 
         // Status badges
-        int bx = 140;
+        int badgeY = 8;
         for (var st : gameLogic.player.getStatusList()) {
             boolean bleed = st.getName().equalsIgnoreCase("bleeding");
+            int badgeW = 90;
             gc.setFill(Color.web(bleed ? "#5a0808" : "#2a1a08", 0.95));
-            gc.fillRoundRect(bx, 11, 72, 18, 5, 5);
+            gc.fillRoundRect(160, badgeY, badgeW, 18, 5, 5);
             gc.setStroke(Color.web(bleed ? "#c0392b" : "#c07830", 0.45));
-            gc.setLineWidth(1); gc.strokeRoundRect(bx, 11, 72, 18, 5, 5);
+            gc.setLineWidth(1); gc.strokeRoundRect(160, badgeY, badgeW, 18, 5, 5);
             gc.setFill(Color.web(bleed ? "#ffaaaa" : "#ffd090"));
-            gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 9));
-            gc.fillText((bleed ? "🩸 " : "🦵 ") + st.getName().toUpperCase(), bx + 5, 23);
-            bx += 78;
+            gc.setFont(Font.font("Arial", 10));
+            gc.fillText(bleed ? "🩸" : "🦵", 164, badgeY + 13);
+            gc.setFont(getCustomFont(7, true));
+            gc.fillText(st.getName().toUpperCase(), 178, badgeY + 13);
+            badgeY += 22;
         }
 
         // Timer (center)
@@ -472,7 +490,7 @@ public class MainGame extends Application {
         gc.setFill(Color.web("#2e1808"));
         gc.setFont(Font.font("Monospaced", 8));
         int hx = 12, hy = barY + 14;
-        for (String hint : new String[]{"Q/E  switch","F    use","R    restart","ESC  menu"}) {
+        for (String hint : new String[]{"1-5   switch","F     use","R     restart","ESC   menu"}) {
             gc.fillText(hint, hx, hy); hy += 12;
         }
     }
@@ -597,8 +615,8 @@ public class MainGame extends Application {
         gc.setStroke(Color.web("#302010")); gc.setLineWidth(1); gc.strokeLine(200,372,600,372);
         gc.setFill(Color.web("#f1c40f")); gc.setFont(Font.font("Monospaced",FontWeight.BOLD,12)); gc.fillText("— C R E D I T S —",W/2.0,394);
         int cy = 416;
-        for (String[] p : new String[][]{{"Game Logic & Design","@pun"},{"Player & Items","@Z3TSUNA"},{"Enemies","@BNiD"}}) {
-            gc.setFill(Color.web("#5a4030")); gc.setFont(Font.font("Monospaced",12)); gc.fillText(p[0]+"   "+p[1],W/2.0,cy); cy+=22;
+        for (String p : new String[]{"Game by groupkai"}) {
+            gc.setFill(Color.web("#5a4030")); gc.setFont(getCustomFont(12, false)); gc.fillText(p, W/2.0, cy); cy+=22;
         }
         gc.setFill(Color.web("#302010")); gc.setFont(Font.font("Monospaced",10)); gc.fillText("[ R ] or [ ESC ]  →  Main Menu",W/2.0,H-18);
         gc.setTextAlign(TextAlignment.LEFT);
@@ -609,10 +627,13 @@ public class MainGame extends Application {
     // ═════════════════════════════════════════════════
 
     private Font getCustomFont(double size, boolean bold) {
-        Font customFont = Font.loadFont(getClass().getResourceAsStream("/PressStart2P.ttf"), size);
-        if (customFont != null) return customFont;
-        return bold ? Font.font("Monospaced", FontWeight.BOLD, size)
-                : Font.font("Monospaced", size);
+        String key = size + "-" + bold;
+        return fontCache.computeIfAbsent(key, k -> {
+            Font customFont = Font.loadFont(getClass().getResourceAsStream("/PressStart2P.ttf"), size);
+            if (customFont != null) return customFont;
+            return bold ? Font.font("Monospaced", FontWeight.BOLD, size)
+                    : Font.font("Monospaced", size);
+        });
     }
 
     private Image slotIcon(String n) {

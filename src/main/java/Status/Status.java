@@ -15,4 +15,7 @@ public abstract class Status {
     }
     public abstract void apply(Player player); // สั่งลดค่า
     public abstract void undo(Player player);
+
+    /** Called every frame from the game loop. Override for time-based effects. */
+    public void tick(Player player) { }
 }

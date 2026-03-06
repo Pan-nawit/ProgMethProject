@@ -99,7 +99,7 @@ public class GameLogic {
         if (!isEndless && getElapsedSeconds() >= stageDurationSeconds) {
             finalElapsedSeconds = getElapsedSeconds();
             isWon = true;
-            player.getStatusList().forEach(st -> player.removeStatus(st.getName()));
+            clearAllStatuses();
             return;
         }
 
@@ -150,10 +150,22 @@ public class GameLogic {
             }
         }
 
+        // Tick all status effects (game-loop synchronized)
+        for (Status.Status st : player.getStatusList()) {
+            st.tick(player);
+        }
+
         if (player.getHp() <= 0) {
             finalElapsedSeconds = getElapsedSeconds();
             isGameOver = true;
-            player.getStatusList().forEach(st -> player.removeStatus(st.getName()));
+            clearAllStatuses();
+        }
+    }
+
+    private void clearAllStatuses() {
+        List<Status.Status> copy = new ArrayList<>(player.getStatusList());
+        for (Status.Status st : copy) {
+            player.removeStatus(st.getName());
         }
     }
 
