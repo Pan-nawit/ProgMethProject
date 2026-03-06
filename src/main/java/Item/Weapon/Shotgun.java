@@ -26,7 +26,7 @@ public class Shotgun extends Gun {
         double fx = dir[0], fy = dir[1];
         double perpX = -fy, perpY = fx;
 
-        GameLogic.addBullet(new Bullet((int) cx, (int) cy, fx,               fy,               15, damage, name));
+        GameLogic.addBullet(new Bullet((int) cx, (int) cy, fx, fy, 15, damage, name));
         GameLogic.addBullet(new Bullet((int) cx, (int) cy, fx + perpX * 0.3, fy + perpY * 0.3, 15, damage, name));
         GameLogic.addBullet(new Bullet((int) cx, (int) cy, fx - perpX * 0.3, fy - perpY * 0.3, 15, damage, name));
 

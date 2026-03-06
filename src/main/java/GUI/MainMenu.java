@@ -265,12 +265,12 @@ public class MainMenu {
         for (String[] kv : new String[][]{
                 {"W / A / S / D", "Move"},
                 {"Left Click",    "Shoot toward cursor"},
-                {"Q / E",         "Switch item"},
+                {"1 ~ 5",         "Switch item"},
                 {"F",             "Use consumable"},
-                {"R",             "Restart / Next stage"},
+                {"R",             "Restart / Next"},
                 {"ESC",           "Main menu"}}) {
             HBox row = new HBox(16);
-            Label k = lbl(kv[0], 12, C_GOLD, true); k.setMinWidth(140);
+            Label k = lbl(kv[0], 12, C_GOLD, true); k.setMinWidth(160);
             Label v = lbl(kv[1], 12, C_TEXT, false);
             row.getChildren().addAll(k, v);
             keysPanel.getChildren().add(row);
@@ -310,7 +310,7 @@ public class MainMenu {
     }
 
     private Font getCustomFont(double size, boolean bold) {
-        Font customFont = Font.loadFont(getClass().getResourceAsStream("/PressStart2P.ttf"), size);
+        Font customFont = Font.loadFont(getClass().getResourceAsStream("/Font/PressStart2P.ttf"), size);
         if (customFont != null) return customFont;
         return bold ? Font.font("Monospaced", FontWeight.BOLD, size)
                 : Font.font("Monospaced", size);

@@ -1,8 +1,7 @@
-package enemy;
+package Enemy;
 
 import Player.Player;
 
-/** Heavy hitter — HP 1, Speed 1, Damage 2 */
 public class HeavyZombie extends BaseEnemy {
     public HeavyZombie(float x, float y) {
         super(1, 1, 2, x, y);

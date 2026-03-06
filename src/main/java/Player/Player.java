@@ -4,10 +4,6 @@ import Item.Weapon.Weapon;
 import Sound.SoundManager;
 import Status.Status;
 
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.awt.Rectangle;
@@ -19,22 +15,21 @@ public class Player {
     private int defaultSpeed = 3;
 
     private int x, y;
-    private int width = 32;  // ความกว้างของตัวละคร
+    private int width = 32;
     private int height = 32;
     private char lastFacing = 'w';
-    //
     private double recoil = 0.0;
     private double maxRecoil = 10.0;
-    private float mouseX = -1; // cursor position in logical coords
+    private float mouseX = -1;
     private float mouseY = -1;
 
     private List<Status> statusList = new ArrayList<>();
     private List<Item> inventory = new ArrayList<>();
-    private int selectedItemIndex = 0; // เพิ่มเพื่อระบุว่าเลือกไอเทมชิ้นไหนใน inventory
+    private int selectedItemIndex = 0;
 
     public Player(){
         this.x = 384;
-        this.y = 234; // center of 500px play area
+        this.y = 234;
         setHp(maxHp);
         setSpeed(defaultSpeed);
     }
@@ -46,23 +41,22 @@ public class Player {
         switch (direction) {
             case 'w' -> {
                 y -= currentSpeed;
-                if (y < 0) y = 0; // ถ้าเกินขอบบน ให้ล็อกไว้ที่ 0
+                if (y < 0) y = 0;
             }
             case 's' -> {
                 y += currentSpeed;
-                if (y > 500 - height) y = 500 - height; // play area height
+                if (y > 500 - height) y = 500 - height;
             }
             case 'a' -> {
                 x -= currentSpeed;
-                if (x < 0) x = 0; // ถ้าเกินขอบซ้าย ให้ล็อกไว้ที่ 0
+                if (x < 0) x = 0;
             }
             case 'd' -> {
                 x += currentSpeed;
-                if (x > 800 - width) x = 800 - width; // หักลบความกว้างของ Player ด้วย
+                if (x > 800 - width) x = 800 - width;
             }
         }
     }
-    // ดึงอาวุธที่กำลังถืออยู่ (สมมติว่าเป็นไอเทมที่เลือกอยู่ใน index ปัจจุบัน)
     public Weapon getEquippedWeapon() {
         if (!inventory.isEmpty() && selectedItemIndex < inventory.size()) {
             Item item = inventory.get(selectedItemIndex);
@@ -73,7 +67,6 @@ public class Player {
         return null;
     }
 
-    // ลบไอเทมออกจากตัว (เรียกใช้เมื่อกระสุนหมด)
     public void removeItem(Item item) {
         inventory.remove(item);
         if (selectedItemIndex >= inventory.size()) {
@@ -81,12 +74,6 @@ public class Player {
         }
     }
 
-    // เปลี่ยนอาวุธ (เผื่อคุณเพิ่มปุ่มเปลี่ยนปืนในอนาคต)
-    public void selectNextItem() {
-        if (!inventory.isEmpty()) {
-            selectedItemIndex = (selectedItemIndex + 1) % inventory.size();
-        }
-    }
     public void onAttacked(int damage, Status incomingStatus) {
         setHp(getHp() - damage);
         SoundManager.getInstance().playSFX("/Sound/Player/classic_hurt.wav");
@@ -95,10 +82,10 @@ public class Player {
     }
     public void applyKnockback(int force) {
         switch (lastFacing) {
-            case 'w' -> y += force; // หันหน้าขึ้น (ยิงขึ้น) ตัวกระเด็นลง
-            case 's' -> y -= force; // หันหน้าลง ตัวกระเด็นขึ้น
-            case 'a' -> x += force; // หันซ้าย ตัวกระเด็นขวา
-            case 'd' -> x -= force; // หันขวา ตัวกระเด็นซ้าย
+            case 'w' -> y += force;
+            case 's' -> y -= force;
+            case 'a' -> x += force;
+            case 'd' -> x -= force;
         }
     }
 
@@ -108,7 +95,7 @@ public class Player {
     }
     public void recoverRecoil() {
         if (recoil > 0) {
-            recoil -= 0.5; // ค่อยๆ ลดลงเรื่อยๆ
+            recoil -= 0.5;
             if (recoil < 0) recoil = 0;
         }
     }
@@ -117,20 +104,10 @@ public class Player {
         for (Item existingItem : inventory) {
             if (existingItem.getName().equals(newItem.getName())) {
                 existingItem.addAmount(newItem.getAmount());
-                return; // ถ้าเจอชื่อซ้ำ ให้บวกจำนวนแล้วจบการทำงานเลย
+                return;
             }
         }
-        inventory.add(newItem); // ถ้าไม่เคยมี ให้เพิ่มเป็นชิ้นใหม่
-    }
-
-    public void useItem(int index) {
-        if (index >= 0 && index < inventory.size()) {
-            Item item = inventory.get(index);
-            item.use(this);
-            if (item.isEmpty()) {
-                inventory.remove(index); // ถ้ากระสุนหมด/ยาหมด ลบทิ้ง
-            }
-        }
+        inventory.add(newItem);
     }
 
     public void addStatus(Status newStatus) {
@@ -174,20 +151,11 @@ public class Player {
     public int getWidth() { return width; }
     public int getHeight() { return height; }
     public double getRecoil() { return recoil; }
-    public char getLastFacing() {return lastFacing;}
     public List<Item> getInventory() { return inventory; }
     public List<Status> getStatusList() { return statusList; }
-
-    public void selectPrevItem() {
-        if (!inventory.isEmpty()) {
-            selectedItemIndex = (selectedItemIndex - 1 + inventory.size()) % inventory.size();
-        }
-    }
-
     public void useSelectedConsumable() {
         if (!inventory.isEmpty() && selectedItemIndex < inventory.size()) {
             Item item = inventory.get(selectedItemIndex);
-            // only use if it's not a weapon (consumables)
             if (!(item instanceof Weapon)) {
                 item.use(this);
                 if (item.isEmpty()) {
@@ -198,16 +166,12 @@ public class Player {
             }
         }
     }
-
     public int getSelectedItemIndex() { return selectedItemIndex; }
-
     public void setSelectedItemIndex(int index) {
         if (index >= 0) {
             this.selectedItemIndex = index;
         }
     }
-
-
     public float getMouseX() { return mouseX; }
     public float getMouseY() { return mouseY; }
     public void setMousePos(float x, float y) { this.mouseX = x; this.mouseY = y; }

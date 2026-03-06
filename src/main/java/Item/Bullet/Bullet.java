@@ -15,12 +15,10 @@ public class Bullet {
         this.y = y;
         this.dx = dx;
         this.dy = dy;
-        this.speed = 12;
+        this.speed = speed;
         this.damage = damage;
-        this.ownerName = "";
+        this.ownerName = ownerName;
     }
-
-
 
     public void update() {
         x += dx * speed;

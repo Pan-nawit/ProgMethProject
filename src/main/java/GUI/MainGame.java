@@ -629,7 +629,7 @@ public class MainGame extends Application {
     private Font getCustomFont(double size, boolean bold) {
         String key = size + "-" + bold;
         return fontCache.computeIfAbsent(key, k -> {
-            Font customFont = Font.loadFont(getClass().getResourceAsStream("/PressStart2P.ttf"), size);
+            Font customFont = Font.loadFont(getClass().getResourceAsStream("/Font/PressStart2P.ttf"), size);
             if (customFont != null) return customFont;
             return bold ? Font.font("Monospaced", FontWeight.BOLD, size)
                     : Font.font("Monospaced", size);

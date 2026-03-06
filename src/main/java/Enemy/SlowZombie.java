@@ -1,12 +1,11 @@
-package enemy;
+package Enemy;
 
 import Player.Player;
 import Status.Limping;
 
-/** Applies Limping (slow) on hit — HP 1, Speed 0.5, Damage 1 */
 public class SlowZombie extends BaseEnemy {
     public SlowZombie(float x, float y) {
-        super(1, 1, 1, x, y); // speed stored as int; uses 0.5 via override
+        super(1, 1, 1, x, y);
         this.attackCooldown = 1000;
     }
 
@@ -16,7 +15,7 @@ public class SlowZombie extends BaseEnemy {
         float diffY = p.getY() - this.y;
         float dist = (float) Math.sqrt(diffX * diffX + diffY * diffY);
         if (dist > 1) {
-            x += (diffX / dist) * 0.5f; // half speed
+            x += (diffX / dist) * 0.5f;
             y += (diffY / dist) * 0.5f;
         }
     }
