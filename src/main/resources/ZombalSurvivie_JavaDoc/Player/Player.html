@@ -1,0 +1,142 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Player — Zombal Survivie JavaDoc</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; color: #1a1a2e; background: #f5f6fa; }
+a { color: #0f3460; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Sidebar ── */
+#sidebar {
+  position: fixed; top: 0; left: 0; width: 260px; height: 100vh;
+  background: #1a1a2e; color: #ccc; overflow-y: auto;
+  padding: 12px 0; z-index: 100;
+}
+#sidebar h1 { font-size: 13px; color: #fff; padding: 8px 16px 12px; border-bottom: 1px solid #333; margin-bottom: 8px; }
+#sidebar .pkg-group { margin-bottom: 4px; }
+#sidebar .pkg-label {
+  display: block; padding: 4px 16px; font-size: 11px; font-weight: bold;
+  color: #7ec8f4; text-transform: uppercase; letter-spacing: .05em; cursor: pointer;
+}
+#sidebar .pkg-label:hover { color: #fff; }
+#sidebar .cls-link {
+  display: block; padding: 3px 16px 3px 28px; font-size: 12px; color: #aaa;
+}
+#sidebar .cls-link:hover { color: #fff; background: #0f3460; }
+
+/* ── Main ── */
+#main { margin-left: 260px; padding: 32px 40px 60px; max-width: 1100px; }
+
+/* ── Breadcrumb / page header ── */
+.page-header { border-bottom: 2px solid #0f3460; padding-bottom: 12px; margin-bottom: 24px; }
+.page-title { font-size: 26px; font-weight: bold; color: #0f3460; }
+.page-sub   { font-size: 13px; color: #666; margin-top: 4px; }
+
+/* ── Class card ── */
+.class-card {
+  background: #fff; border: 1px solid #dde; border-radius: 6px;
+  margin-bottom: 32px; overflow: hidden; scroll-margin-top: 20px;
+}
+.class-card-header {
+  padding: 12px 20px; color: #fff; font-size: 16px; font-weight: bold;
+}
+.class-card-header.iface  { background: #1a6b4a; }
+.class-card-header.abst   { background: #7b3f00; }
+.class-card-header.enm    { background: #5c3a7e; }
+.class-card-header.cls    { background: #533483; }
+
+.class-card-header small  { font-size: 12px; font-weight: normal; opacity: .85; margin-left: 8px; }
+.class-doc { padding: 12px 20px 4px; color: #333; font-size: 13.5px; line-height: 1.6; background: #f9f9fc; border-bottom: 1px solid #eee; }
+.class-doc.empty { display: none; }
+
+/* ── Section inside card ── */
+.section-title {
+  padding: 8px 20px; font-size: 12px; font-weight: bold;
+  background: #dde3f0; color: #1a1a2e; text-transform: uppercase; letter-spacing: .06em;
+  border-top: 1px solid #ccd;
+}
+
+/* ── Member table ── */
+table.members { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.members th {
+  background: #eef0f8; text-align: left; padding: 6px 12px;
+  font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #555;
+  border-bottom: 1px solid #dde;
+}
+table.members td { padding: 7px 12px; vertical-align: top; border-bottom: 1px solid #eef; }
+table.members tr:last-child td { border-bottom: none; }
+table.members tr:hover td { background: #f5f7ff; }
+.sig  { font-family: 'Courier New', monospace; font-size: 12px; white-space: pre-wrap; color: #0f3460; }
+.desc { color: #444; line-height: 1.5; }
+
+/* ── Badges ── */
+.badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; margin-right: 2px; }
+.badge.pub  { background: #1a6b4a; color: #fff; }
+.badge.prot { background: #7b3f00; color: #fff; }
+.badge.priv { background: #666;    color: #fff; }
+.badge.pkg  { background: #888;    color: #fff; }
+.badge.mod  { background: #0f3460; color: #fff; }
+
+/* ── Index page ── */
+.index-pkg  { font-size: 18px; font-weight: bold; color: #0f3460; margin: 24px 0 8px; border-bottom: 2px solid #0f3460; padding-bottom: 4px; }
+.index-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.index-card {
+  background: #fff; border: 1px solid #dde; border-radius: 5px;
+  padding: 12px 14px; transition: box-shadow .15s;
+}
+.index-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+.index-card .cn { font-weight: bold; font-size: 14px; color: #533483; }
+.index-card .ct { font-size: 11px; color: #888; margin-bottom: 4px; }
+.index-card .cd { font-size: 12px; color: #555; line-height: 1.4; }
+
+/* ── Topbar (index page only) ── */
+#topbar { background: #0f3460; color: #fff; padding: 14px 40px; font-size: 18px; font-weight: bold; }
+</style></head><body>
+<div id="main">
+<div class="page-header">
+<div class="page-sub">Player</div>
+<div class="page-title">Player</div>
+</div>
+<div class="class-card">
+<div class="class-card-header cls"> class <strong>Player</strong> </div>
+<div class="class-doc ">Player entity with movement, inventory (6 slots selectable by DIGIT1–DIGIT6), equipped weapon, recoil recovery, status effects, and mouse-aim support.</div>
+<div class="section-title">Constructors</div>
+<table class="members"><tr><th>Modifiers</th><th>Signature</th><th>Description</th></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">Player()</span></td><td class="desc"></td></tr>
+</table>
+<div class="section-title">Methods</div>
+<table class="members"><tr><th>Modifiers</th><th>Return</th><th>Signature</th><th>Description</th></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">void</span></td><td><span class="sig">move(char direction)</span></td><td class="desc">Moves the player one speed-step in the given direction (w/a/s/d), clamped to bounds</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">Weapon</span></td><td><span class="sig">getEquippedWeapon()</span></td><td class="desc">Returns the Weapon at selectedItemIndex, or null if none equipped</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">void</span></td><td><span class="sig">removeItem(Item item)</span></td><td class="desc">Removes the given Item and adjusts selectedItemIndex if needed</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">void</span></td><td><span class="sig">onAttacked(int damage, Status incomingStatus)</span></td><td class="desc">Reduces HP by damage amount, plays hurt SFX, and optionally adds a Status effect</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">void</span></td><td><span class="sig">applyKnockback(int force)</span></td><td class="desc">Pushes the player opposite to lastFacing by the given force in pixels</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">void</span></td><td><span class="sig">addRecoil(double amount)</span></td><td class="desc">Increases the recoil value; capped at maxRecoil</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">void</span></td><td><span class="sig">recoverRecoil()</span></td><td class="desc">Decreases recoil by 0.5 per frame until it reaches 0</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">void</span></td><td><span class="sig">addItem(Item newItem)</span></td><td class="desc">Adds the item to inventory or stacks its amount onto an existing matching item</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">void</span></td><td><span class="sig">addStatus(Status newStatus)</span></td><td class="desc">Applies and registers a Status effect if the player does not already have it</td></tr>
+<tr><td><span class="badge priv">private</span></td><td><span class="sig">boolean</span></td><td><span class="sig">hasStatus(String statusName)</span></td><td class="desc">Returns true if a status with the given name is currently active (private)</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">void</span></td><td><span class="sig">removeStatus(String statusName)</span></td><td class="desc">Removes the named status and calls its undo() to reverse the effect</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">Rectangle</span></td><td><span class="sig">getBounds()</span></td><td class="desc">Returns a Rectangle for collision detection at the player&#x27;s current position</td></tr>
+<tr><td><span class="badge pkg">package</span></td><td><span class="sig">return new</span></td><td><span class="sig">Rectangle(x, y, width, height)</span></td><td class="desc"></td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">int</span></td><td><span class="sig">getHp()</span></td><td class="desc">Returns the player&#x27;s current HP</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">void</span></td><td><span class="sig">setHp(int hp)</span></td><td class="desc">Sets HP, clamped to [0, maxHp]</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">int</span></td><td><span class="sig">getSpeed()</span></td><td class="desc">Returns the player&#x27;s current movement speed</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">int</span></td><td><span class="sig">getDefaultSpeed()</span></td><td class="desc">Returns the base movement speed (before status effects)</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">void</span></td><td><span class="sig">setSpeed(int speed)</span></td><td class="desc">Sets the player&#x27;s current movement speed</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">int</span></td><td><span class="sig">getX()</span></td><td class="desc">Returns the player&#x27;s X world coordinate</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">int</span></td><td><span class="sig">getY()</span></td><td class="desc">Returns the player&#x27;s Y world coordinate</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">int</span></td><td><span class="sig">getWidth()</span></td><td class="desc">Returns the player sprite width</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">int</span></td><td><span class="sig">getHeight()</span></td><td class="desc">Returns the player sprite height</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">double</span></td><td><span class="sig">getRecoil()</span></td><td class="desc">Returns the current recoil accumulation value</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">List&lt;Item&gt;</span></td><td><span class="sig">getInventory()</span></td><td class="desc">Returns the full inventory list</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">List&lt;Status&gt;</span></td><td><span class="sig">getStatusList()</span></td><td class="desc">Returns the list of active status effects</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">void</span></td><td><span class="sig">useSelectedConsumable()</span></td><td class="desc">Uses the selected non-weapon item and removes it from inventory if empty</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">int</span></td><td><span class="sig">getSelectedItemIndex()</span></td><td class="desc">Returns the currently selected inventory slot index</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">void</span></td><td><span class="sig">setSelectedItemIndex(int index)</span></td><td class="desc">Directly sets the active slot index (for number-key 1–6 bindings)</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">float</span></td><td><span class="sig">getMouseX()</span></td><td class="desc">Returns the mouse X coordinate in play-area space</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">float</span></td><td><span class="sig">getMouseY()</span></td><td class="desc">Returns the mouse Y coordinate in play-area space</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">void</span></td><td><span class="sig">setMousePos(float x, float y)</span></td><td class="desc">Updates mouseX/mouseY from the current mouse event position</td></tr>
+<tr><td><span class="badge pub">public</span></td><td><span class="sig">double</span></td><td><span class="sig">getMaxRecoil()</span></td><td class="desc">Returns the maximum recoil cap value</td></tr>
+</table>
+</div></div></body></html>
