@@ -97,7 +97,7 @@ public class GameLogic {
         if (!isEndless && getElapsedSeconds() >= stageDurationSeconds) {
             finalElapsedSeconds = getElapsedSeconds();
             isWon = true;
-            player.getStatusList().forEach(st -> player.removeStatus(st.getName()));
+            new ArrayList<>(player.getStatusList()).forEach(st -> player.removeStatus(st.getName()));
             return;
         }
 
@@ -153,7 +153,7 @@ public class GameLogic {
         if (player.getHp() <= 0) {
             finalElapsedSeconds = getElapsedSeconds();
             isGameOver = true;
-            player.getStatusList().forEach(st -> player.removeStatus(st.getName()));
+            new ArrayList<>(player.getStatusList()).forEach(st -> player.removeStatus(st.getName()));
         }
     }
 

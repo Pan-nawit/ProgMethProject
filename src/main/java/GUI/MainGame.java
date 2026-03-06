@@ -82,7 +82,6 @@ public class MainGame extends Application {
     // ═════════════════════════════════════════════════
 
     private void loadAssets() {
-        // Enemy sprites — keyed by class simple name (exact match)
         enemyImages.put("zombie",        img("/Images/enemy/zombie.png"));
         enemyImages.put("Runners",       img("/Images/enemy/runners.png"));
         enemyImages.put("Screamers",     img("/Images/enemy/screamers.png"));
@@ -91,17 +90,14 @@ public class MainGame extends Application {
         enemyImages.put("juggernaut",    img("/Images/enemy/juggernaut.png"));
         enemyImages.put("AnimalZombies", img("/Images/enemy/animalzombies.png"));
 
-        // Player
         playerWalk = new Image[]{ img("/Images/Player/player.png") };
 
-        // Item slot icons
         slots.put("gun_slot",         img("/Images/Gun/Pistol.png"));
         slots.put("double_ammo_slot", img("/Images/Gun/Machinegun.png"));
         slots.put("shotgun_slot",     img("/Images/Gun/Shotgun.png"));
         slots.put("health_kit_slot",  img("/Images/HealingItems/medkit.png"));
         slots.put("medicine_slot",    img("/Images/HealingItems/bandage.png"));
 
-        // Ground pickups
         pickups.put(String.valueOf(P_PISTOL),     img("/Images/Gun/Pistol.png"));
         pickups.put(String.valueOf(P_MACHINEGUN), img("/Images/Gun/Machinegun.png"));
         pickups.put(String.valueOf(P_SHOTGUN),    img("/Images/Gun/Shotgun.png"));
@@ -110,6 +106,7 @@ public class MainGame extends Application {
     }
 
     private void preloadFonts() {
+        // Pre-load all font sizes used in the game so there's zero loading during gameplay
         double[] sizes = {7, 8, 9, 10, 12, 13, 14, 16, 20, 24, 30, 38};
         for (double size : sizes) {
             getCustomFont(size, true);
@@ -150,7 +147,7 @@ public class MainGame extends Application {
             switch (e.getCode()) {
                 case W -> w = true;  case A -> a = true;
                 case S -> s = true;  case D -> d = true;
-                case R -> {
+                case ENTER -> {
                     if (gameLogic.isGameOver) {
                         startGame();
                     } else if (gameLogic.isWon) {
@@ -179,6 +176,7 @@ public class MainGame extends Application {
                 case DIGIT3 -> gameLogic.player.setSelectedItemIndex(2);
                 case DIGIT4 -> gameLogic.player.setSelectedItemIndex(3);
                 case DIGIT5 -> gameLogic.player.setSelectedItemIndex(4);
+                case DIGIT6 -> gameLogic.player.setSelectedItemIndex(5);
                 case F -> gameLogic.player.useSelectedConsumable();
             }
         });
@@ -207,13 +205,13 @@ public class MainGame extends Application {
 
     private void showCredits() {
         if (loop != null) loop.stop();
-        SoundManager.getInstance().playBGM("/Sound/BGM/main.wav");
+        SoundManager.getInstance().stopBGM();
         if (unlockedStages < 4) unlockedStages = 4;
         Canvas c = new Canvas(W, H);
         Scene sc = new Scene(new StackPane(c));
         drawCredits(c.getGraphicsContext2D());
         sc.setOnKeyPressed(e -> {
-            if (e.getCode() == javafx.scene.input.KeyCode.R ||
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER ||
                     e.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
                 selectedStage = 1; showMainMenu();
             }
@@ -274,7 +272,7 @@ public class MainGame extends Application {
 
             Image pi = pickups.get(String.valueOf(pickupIdx(item.getName())));
             if (pi != null) {
-                gc.drawImage(pi, ix, iy, 24, 24); // fixed 24x24
+                gc.drawImage(pi, ix, iy, 24, 24);
             } else {
                 gc.setFill(itemColor(item.getName()));
                 gc.fillRoundRect(ix, iy, 22, 22, 4, 4);
@@ -291,7 +289,7 @@ public class MainGame extends Application {
             gc.setFill(Color.web("#fff8c0")); gc.fillOval(bx-2, by-2, 4, 4);
         }
 
-        // Enemies — lookup by exact class name, no frame animation
+        // Enemies
         for (var enemy : gameLogic.enemies) {
             int ex = enemy.getX(), ey = enemy.getY() + HUD_H;
             int ew = enemy.getWidth(), eh = enemy.getHeight();
@@ -362,14 +360,14 @@ public class MainGame extends Application {
         gc.setStroke(Color.web("#6e1010", 0.9)); gc.setLineWidth(2);
         gc.strokeLine(0, HUD_H, W, HUD_H);
 
-        // HP hearts
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 8));
-        gc.setFill(Color.web("#4a3020")); gc.fillText("HEALTH", 12, 13);
+        gc.setFont(getCustomFont(8, true));
+        gc.setFill(Color.web("#4a3020")); gc.fillText("HEALTH", 12, 16);
+
         int hp = gameLogic.player.getHp();
         for (int i = 0; i < 5; i++) {
-            gc.setFont(Font.font("Arial", 22));
+            gc.setFont(Font.font("Arial", 30));
             gc.setFill(i < hp ? Color.web("#c0392b") : Color.web("#2a1008"));
-            gc.fillText(i < hp ? "♥" : "♡", 10 + i * 24, 42);
+            gc.fillText(i < hp ? "♥" : "♡", 10 + i * 28, 46);
         }
 
         // Status badges
@@ -377,49 +375,53 @@ public class MainGame extends Application {
         for (var st : gameLogic.player.getStatusList()) {
             boolean bleed = st.getName().equalsIgnoreCase("bleeding");
             int badgeW = 90;
+
             gc.setFill(Color.web(bleed ? "#5a0808" : "#2a1a08", 0.95));
             gc.fillRoundRect(160, badgeY, badgeW, 18, 5, 5);
             gc.setStroke(Color.web(bleed ? "#c0392b" : "#c07830", 0.45));
             gc.setLineWidth(1); gc.strokeRoundRect(160, badgeY, badgeW, 18, 5, 5);
+
             gc.setFill(Color.web(bleed ? "#ffaaaa" : "#ffd090"));
             gc.setFont(Font.font("Arial", 10));
             gc.fillText(bleed ? "🩸" : "🦵", 164, badgeY + 13);
+
             gc.setFont(getCustomFont(7, true));
             gc.fillText(st.getName().toUpperCase(), 178, badgeY + 13);
+
             badgeY += 22;
         }
 
         // Timer (center)
         gc.setTextAlign(TextAlignment.CENTER);
         gc.setFill(Color.web("#4a3020"));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 9));
-        gc.fillText("STAGE " + selectedStage + "  ·  " + diffLabel(), W / 2.0, 13);
+        gc.setFont(getCustomFont(8, true));
+        gc.fillText("STAGE " + selectedStage + "  -  " + diffLabel(), W / 2.0, 15);
 
         gc.setFill(endless ? Color.web("#27ae60") : (urgent ? Color.web("#e74c3c") : Color.web("#d8cfc0")));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 30));
-        gc.fillText(fmtTime(rem), W / 2.0, 43);
+        gc.setFont(getCustomFont(20, true));
+        gc.fillText(fmtTime(rem), W / 2.0, 40);
 
-        int bw = 160;
+        int bw = 240, bh = 5, by = HUD_H - 10;
         gc.setFill(Color.web("#1a1008"));
-        gc.fillRoundRect(W / 2.0 - bw / 2.0, HUD_H - 7, bw, 4, 2, 2);
+        gc.fillRoundRect(W / 2.0 - bw / 2.0, by, bw, bh, 3, 3);
         if (endless) {
             double pulse = Math.abs(Math.sin(animTick * 0.2));
             gc.setFill(Color.web("#27ae60", 0.4 + 0.6 * pulse));
-            gc.fillRoundRect(W / 2.0 - bw / 2.0, HUD_H - 7, bw, 4, 2, 2);
+            gc.fillRoundRect(W / 2.0 - bw / 2.0, by, bw, bh, 3, 3);
         } else {
             gc.setFill(urgent ? Color.web("#c0392b") : Color.web("#27ae60"));
-            gc.fillRoundRect(W / 2.0 - bw / 2.0, HUD_H - 7, bw * ((double) rem / dur), 4, 2, 2);
+            gc.fillRoundRect(W / 2.0 - bw / 2.0, by, bw * ((double) rem / dur), bh, 3, 3);
         }
         gc.setTextAlign(TextAlignment.LEFT);
 
         // Score + wave (right)
         gc.setTextAlign(TextAlignment.RIGHT);
         gc.setFill(Color.web("#f1c40f"));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 19));
-        gc.fillText("$  " + gameLogic.score, W - 12, 29);
+        gc.setFont(getCustomFont(16, true));
+        gc.fillText("Score: " + gameLogic.score, W - 12, 26);
         gc.setFill(Color.web("#4a3020"));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 10));
-        gc.fillText("WAVE  " + gameLogic.wave, W - 12, 46);
+        gc.setFont(getCustomFont(10, true));
+        gc.fillText("WAVE  " + gameLogic.wave, W - 12, 44);
         gc.setTextAlign(TextAlignment.LEFT);
     }
 
@@ -456,7 +458,7 @@ public class MainGame extends Application {
             }
 
             gc.setFill(isSel ? Color.web("#f1c40f", 0.9) : Color.web("#3a2010", 0.9));
-            gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 8));
+            gc.setFont(getCustomFont(8, true));
             gc.fillText(String.valueOf(i + 1), sx + 3, sy + 10);
 
             if (i < inv.size()) {
@@ -472,7 +474,7 @@ public class MainGame extends Application {
                 }
 
                 gc.setTextAlign(TextAlignment.CENTER);
-                gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 7));
+                gc.setFont(getCustomFont(7, true));
                 gc.setFill(isSel ? Color.web("#f1c40f") : Color.web("#7a6040"));
                 gc.fillText(name.substring(0, Math.min(7, name.length())).toUpperCase(),
                         sx + slotW / 2.0, sy + slotH - 7);
@@ -480,7 +482,7 @@ public class MainGame extends Application {
                 gc.setFill(Color.web("#000000", 0.78));
                 gc.fillRoundRect(sx + slotW - 17, sy + 2, 16, 10, 2, 2);
                 gc.setFill(isSel ? Color.web("#f1c40f") : Color.web("#8a6840"));
-                gc.setFont(Font.font("Monospaced", 7));
+                gc.setFont(getCustomFont(7, false));
                 gc.fillText(String.valueOf(item.getAmount()), sx + slotW - 9, sy + 10);
                 gc.setTextAlign(TextAlignment.LEFT);
             }
@@ -488,9 +490,9 @@ public class MainGame extends Application {
 
         // Key hints
         gc.setFill(Color.web("#2e1808"));
-        gc.setFont(Font.font("Monospaced", 8));
+        gc.setFont(getCustomFont(8, false));
         int hx = 12, hy = barY + 14;
-        for (String hint : new String[]{"1-5   switch","F     use","R     restart","ESC   menu"}) {
+        for (String hint : new String[]{"1-6   switch","F     use","ENTER restart","ESC   menu"}) {
             gc.fillText(hint, hx, hy); hy += 12;
         }
     }
@@ -544,15 +546,15 @@ public class MainGame extends Application {
             int secs = (int) gameLogic.finalElapsedSeconds;
             title = "YOU SURVIVED";
             sub   = "Time: " + fmtTime(secs) + "  ·  Score  " + gameLogic.score;
-            hint  = "[ R ] Play Again    [ ESC ] Menu";
+            hint  = "[ ENTER ] Play Again    [ ESC ] Menu";
         } else if (!died) {
             title = "SURVIVED!";
             sub   = "Stage " + selectedStage + " Clear  ·  Score  " + gameLogic.score;
-            hint  = (selectedStage == 3 ? "[ R ] Credits" : "[ R ] Next Stage") + "    [ ESC ] Menu";
+            hint  = (selectedStage == 3 ? "[ ENTER ] Credits" : "[ ENTER ] Next Stage") + "    [ ESC ] Menu";
         } else {
             title = "YOU DIED";
             sub   = "Score   " + gameLogic.score;
-            hint  = "[ R ] Restart    [ ESC ] Menu";
+            hint  = "[ ENTER ] Restart    [ ESC ] Menu";
         }
 
         int pw = 500, ph = endless && died ? 175 : 155;
@@ -564,23 +566,23 @@ public class MainGame extends Application {
 
         gc.setTextAlign(TextAlignment.CENTER);
         gc.setFill(Color.web(col));
-        gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 38));
+        gc.setFont(getCustomFont(38, true));
         gc.fillText(title, W / 2.0, py + 48);
 
         if (endless && died) {
             int secs = (int) gameLogic.finalElapsedSeconds;
             gc.setFill(Color.web("#ffffff", 0.95));
-            gc.setFont(Font.font("Monospaced", FontWeight.BOLD, 24));
+            gc.setFont(getCustomFont(24, true));
             gc.fillText(fmtTime(secs), W / 2.0, py + 80);
             gc.setFill(Color.web("#c8bfb0"));
-            gc.setFont(Font.font("Monospaced", 12));
+            gc.setFont(getCustomFont(12, false));
             gc.fillText("Score  " + gameLogic.score + "  ·  Wave  " + gameLogic.wave, W / 2.0, py + 102);
             gc.setFill(Color.web("#5a4030"));
-            gc.setFont(Font.font("Monospaced", 10));
+            gc.setFont(getCustomFont(10, false));
             gc.fillText(hint, W / 2.0, py + 126);
         } else {
-            gc.setFill(Color.web("#c8bfb0")); gc.setFont(Font.font("Monospaced", 13)); gc.fillText(sub, W / 2.0, py + 85);
-            gc.setFill(Color.web("#5a4030")); gc.setFont(Font.font("Monospaced", 10)); gc.fillText(hint, W / 2.0, py + 110);
+            gc.setFill(Color.web("#c8bfb0")); gc.setFont(getCustomFont(13, false)); gc.fillText(sub, W / 2.0, py + 85);
+            gc.setFill(Color.web("#5a4030")); gc.setFont(getCustomFont(10, false)); gc.fillText(hint, W / 2.0, py + 110);
         }
 
         gc.setStroke(Color.web(col, 0.25)); gc.setLineWidth(1);
@@ -607,19 +609,31 @@ public class MainGame extends Application {
 
         gc.setTextAlign(TextAlignment.CENTER);
         gc.setFill(Color.web("#27ae60",0.12)); gc.fillOval(250,20,300,300);
+
         gc.setFill(Color.web("#27ae60")); gc.setFont(Font.font("Arial",FontWeight.BOLD,68)); gc.fillText("☣",W/2.0,215);
-        gc.setFill(Color.web("#27ae60")); gc.setFont(Font.font("Monospaced",FontWeight.BOLD,30)); gc.fillText("CONGRATULATIONS!",W/2.0,276);
-        gc.setFill(Color.web("#c8bfb0")); gc.setFont(Font.font("Monospaced",14)); gc.fillText("You survived all 3 stages.",W/2.0,306);
-        gc.setFill(Color.web("#c0392b")); gc.setFont(Font.font("Monospaced",FontWeight.BOLD,13)); gc.fillText("You don't get infected.",W/2.0,330);
-        gc.setFill(Color.web("#9b59b6")); gc.setFont(Font.font("Monospaced",FontWeight.BOLD,12)); gc.fillText("✦  STAGE 4 — ENDLESS MODE UNLOCKED  ✦",W/2.0,355);
+
+        gc.setFill(Color.web("#27ae60")); gc.setFont(getCustomFont(30, true)); gc.fillText("CONGRATULATIONS!",W/2.0,276);
+        gc.setFill(Color.web("#c8bfb0")); gc.setFont(getCustomFont(14, false)); gc.fillText("You survived all 3 stages.",W/2.0,306);
+        gc.setFill(Color.web("#c0392b")); gc.setFont(getCustomFont(13, true)); gc.fillText("You don't get infected.",W/2.0,330);
+        gc.setFill(Color.web("#9b59b6")); gc.setFont(getCustomFont(12, true)); gc.fillText("STAGE 4 — ENDLESS MODE UNLOCKED",W/2.0,355);
         gc.setStroke(Color.web("#302010")); gc.setLineWidth(1); gc.strokeLine(200,372,600,372);
-        gc.setFill(Color.web("#f1c40f")); gc.setFont(Font.font("Monospaced",FontWeight.BOLD,12)); gc.fillText("— C R E D I T S —",W/2.0,394);
+        gc.setFill(Color.web("#f1c40f")); gc.setFont(getCustomFont(12, true)); gc.fillText("— C R E D I T S —",W/2.0,394);
         int cy = 416;
-        for (String p : new String[]{"Game by groupkai"}) {
-            gc.setFill(Color.web("#5a4030")); gc.setFont(getCustomFont(12, false)); gc.fillText(p, W/2.0, cy); cy+=22;
+
+        String[][] credits = {
+                {"Game by", "GroupKai"},
+                {"6833152121", "Papangkorn Chaiwanon"},
+                {"6833166021", "Pannawit Wanitsuwan"},
+                {"6833224721", "Phuriwat Saksri"},
+                {"6833246521", "Wattana Jumpathong"}
+        };
+
+        for (String[] p : credits) {
+            gc.setFill(Color.web("#5a4030"));
+            gc.setFont(getCustomFont(12, false));
+            gc.fillText(p[0] + "   " + p[1], W / 2.0, cy);
+            cy += 22;
         }
-        gc.setFill(Color.web("#302010")); gc.setFont(Font.font("Monospaced",10)); gc.fillText("[ R ] or [ ESC ]  →  Main Menu",W/2.0,H-18);
-        gc.setTextAlign(TextAlignment.LEFT);
     }
 
     // ═════════════════════════════════════════════════
