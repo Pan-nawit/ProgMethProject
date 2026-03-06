@@ -53,6 +53,9 @@ public class MainGame extends Application {
     private final Map<String, Image> slots       = new HashMap<>();
     private final Map<String, Image> pickups     = new HashMap<>();
 
+    // ── Font cache ────────────────────────────────────
+    private final Map<String, Font> fontCache = new HashMap<>();
+
     private static final int P_PISTOL     = 4;
     private static final int P_MACHINEGUN = 10;
     private static final int P_MEDKIT     = 13;
@@ -69,6 +72,7 @@ public class MainGame extends Application {
         primaryStage.setTitle("Zombal Survivie");
         primaryStage.setResizable(false);
         loadAssets();
+        preloadFonts();
         showMainMenu();
         primaryStage.show();
     }
@@ -78,7 +82,6 @@ public class MainGame extends Application {
     // ═════════════════════════════════════════════════
 
     private void loadAssets() {
-        // Enemy sprites — keyed by class simple name (exact match)
         enemyImages.put("zombie",        img("/Images/enemy/zombie.png"));
         enemyImages.put("Runners",       img("/Images/enemy/runners.png"));
         enemyImages.put("Screamers",     img("/Images/enemy/screamers.png"));
@@ -87,22 +90,28 @@ public class MainGame extends Application {
         enemyImages.put("juggernaut",    img("/Images/enemy/juggernaut.png"));
         enemyImages.put("AnimalZombies", img("/Images/enemy/animalzombies.png"));
 
-        // Player
         playerWalk = new Image[]{ img("/Images/Player/player.png") };
 
-        // Item slot icons
         slots.put("gun_slot",         img("/Images/Gun/Pistol.png"));
         slots.put("double_ammo_slot", img("/Images/Gun/Machinegun.png"));
         slots.put("shotgun_slot",     img("/Images/Gun/Shotgun.png"));
         slots.put("health_kit_slot",  img("/Images/HealingItems/medkit.png"));
         slots.put("medicine_slot",    img("/Images/HealingItems/bandage.png"));
 
-        // Ground pickups
         pickups.put(String.valueOf(P_PISTOL),     img("/Images/Gun/Pistol.png"));
         pickups.put(String.valueOf(P_MACHINEGUN), img("/Images/Gun/Machinegun.png"));
         pickups.put(String.valueOf(P_SHOTGUN),    img("/Images/Gun/Shotgun.png"));
         pickups.put(String.valueOf(P_MEDKIT),     img("/Images/HealingItems/medkit.png"));
         pickups.put(String.valueOf(P_MEDICINE),   img("/Images/HealingItems/bandage.png"));
+    }
+
+    private void preloadFonts() {
+        // Pre-load all font sizes used in the game so there's zero loading during gameplay
+        double[] sizes = {7, 8, 9, 10, 12, 13, 14, 16, 20, 24, 30, 38};
+        for (double size : sizes) {
+            getCustomFont(size, true);
+            getCustomFont(size, false);
+        }
     }
 
     private Image img(String path) {
@@ -153,7 +162,6 @@ public class MainGame extends Application {
                     }
                 }
                 case ESCAPE -> {
-                    // Check if they won before they quit to the menu
                     if (gameLogic.isWon) {
                         if (selectedStage == 3) {
                             if (unlockedStages < 4) unlockedStages = 4;
@@ -161,16 +169,13 @@ public class MainGame extends Application {
                             if (selectedStage + 1 > unlockedStages) unlockedStages = selectedStage + 1;
                         }
                     }
-                    showMainMenu(); // Now it safely goes to the menu WITH the new stage unlocked
+                    showMainMenu();
                 }
-
-                // 🌟 UPDATE: Changed Q/E logic to 1,2,3,4,5,6 keys
                 case DIGIT1 -> gameLogic.player.setSelectedItemIndex(0);
                 case DIGIT2 -> gameLogic.player.setSelectedItemIndex(1);
                 case DIGIT3 -> gameLogic.player.setSelectedItemIndex(2);
                 case DIGIT4 -> gameLogic.player.setSelectedItemIndex(3);
                 case DIGIT5 -> gameLogic.player.setSelectedItemIndex(4);
-
                 case F -> gameLogic.player.useSelectedConsumable();
             }
         });
@@ -266,7 +271,7 @@ public class MainGame extends Application {
 
             Image pi = pickups.get(String.valueOf(pickupIdx(item.getName())));
             if (pi != null) {
-                gc.drawImage(pi, ix, iy, 24, 24); // fixed 24x24
+                gc.drawImage(pi, ix, iy, 24, 24);
             } else {
                 gc.setFill(itemColor(item.getName()));
                 gc.fillRoundRect(ix, iy, 22, 22, 4, 4);
@@ -283,7 +288,7 @@ public class MainGame extends Application {
             gc.setFill(Color.web("#fff8c0")); gc.fillOval(bx-2, by-2, 4, 4);
         }
 
-        // Enemies — lookup by exact class name, no frame animation
+        // Enemies
         for (var enemy : gameLogic.enemies) {
             int ex = enemy.getX(), ey = enemy.getY() + HUD_H;
             int ew = enemy.getWidth(), eh = enemy.getHeight();
@@ -354,11 +359,9 @@ public class MainGame extends Application {
         gc.setStroke(Color.web("#6e1010", 0.9)); gc.setLineWidth(2);
         gc.strokeLine(0, HUD_H, W, HUD_H);
 
-        // 🌟 UPDATE: Y adjusted slightly down
         gc.setFont(getCustomFont(8, true));
         gc.setFill(Color.web("#4a3020")); gc.fillText("HEALTH", 12, 16);
 
-        // 🌟 UPDATE: Hearts size scaled up and spaced out slightly
         int hp = gameLogic.player.getHp();
         for (int i = 0; i < 5; i++) {
             gc.setFont(Font.font("Arial", 30));
@@ -384,19 +387,13 @@ public class MainGame extends Application {
         gc.setTextAlign(TextAlignment.CENTER);
         gc.setFill(Color.web("#4a3020"));
         gc.setFont(getCustomFont(8, true));
-        // 🌟 UPDATE: Moved Y down so it is not cut off by the title bar
         gc.fillText("STAGE " + selectedStage + "  -  " + diffLabel(), W / 2.0, 15);
 
         gc.setFill(endless ? Color.web("#27ae60") : (urgent ? Color.web("#e74c3c") : Color.web("#d8cfc0")));
-        // 🌟 UPDATE: Shrunk timer font (ย่อ) and adjusted Y to compensate
         gc.setFont(getCustomFont(20, true));
         gc.fillText(fmtTime(rem), W / 2.0, 40);
 
-        // 🌟 UPDATE: Stretched timer bar (ยืด), and made it taller
-        int bw = 240; // width
-        int bh = 5;   // height
-        int by = HUD_H - 10; // y pos
-
+        int bw = 240, bh = 5, by = HUD_H - 10;
         gc.setFill(Color.web("#1a1008"));
         gc.fillRoundRect(W / 2.0 - bw / 2.0, by, bw, bh, 3, 3);
         if (endless) {
@@ -412,7 +409,6 @@ public class MainGame extends Application {
         // Score + wave (right)
         gc.setTextAlign(TextAlignment.RIGHT);
         gc.setFill(Color.web("#f1c40f"));
-        // 🌟 UPDATE: Replaced '$' with 'Score: ' and adjusted size
         gc.setFont(getCustomFont(16, true));
         gc.fillText("Score: " + gameLogic.score, W - 12, 26);
         gc.setFill(Color.web("#4a3020"));
@@ -488,8 +484,6 @@ public class MainGame extends Application {
         gc.setFill(Color.web("#2e1808"));
         gc.setFont(getCustomFont(8, false));
         int hx = 12, hy = barY + 14;
-
-        // 🌟 UPDATE: Adjusted hints text here for the new keys.
         for (String hint : new String[]{"1-6   switch","F     use","ENTER restart","ESC   menu"}) {
             gc.fillText(hint, hx, hy); hy += 12;
         }
@@ -630,12 +624,13 @@ public class MainGame extends Application {
     // ═════════════════════════════════════════════════
 
     private Font getCustomFont(double size, boolean bold) {
-        Font customFont = Font.loadFont(getClass().getResourceAsStream("/PressStart2P.ttf"), size);
-        if (customFont != null) {
-            return customFont;
-        }
-        return bold ? Font.font("Monospaced", FontWeight.BOLD, size)
-                : Font.font("Monospaced", size);
+        String key = size + "-" + bold;
+        return fontCache.computeIfAbsent(key, k -> {
+            Font customFont = Font.loadFont(getClass().getResourceAsStream("/PressStart2P.ttf"), size);
+            if (customFont != null) return customFont;
+            return bold ? Font.font("Monospaced", FontWeight.BOLD, size)
+                    : Font.font("Monospaced", size);
+        });
     }
 
     private Image slotIcon(String n) {
