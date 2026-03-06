@@ -1,7 +1,7 @@
-package Enemy;
+package enemy;
 import Player.Player;
-public class Runners extends BaseEnemy {
-    public Runners(float x, float y) { super(1, 2, 1, x, y); }
+public class zombie extends BaseEnemy {
+    public zombie(float x, float y) { super(1,1,1,x,y); this.attackCooldown = 1000; }
     @Override
     public void Attackplayer(Player p) {
         if (this.getBounds().intersects(p.getBounds())) {
@@ -12,5 +12,4 @@ public class Runners extends BaseEnemy {
             }
         }
     }
-    @Override public javafx.scene.paint.Color getEnemyColor() { return javafx.scene.paint.Color.web("#f39c12"); }
 }

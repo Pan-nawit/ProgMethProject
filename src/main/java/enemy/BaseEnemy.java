@@ -1,4 +1,4 @@
-package Enemy;
+package enemy;
 
 import Interface.Attackable;
 import Player.Player;

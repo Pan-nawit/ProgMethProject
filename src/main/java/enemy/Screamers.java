@@ -1,4 +1,4 @@
-package Enemy;
+package enemy;
 import Player.Player;
 public class Screamers extends BaseEnemy {
     public Screamers(float x, float y) { super(1,1,1,x,y); }

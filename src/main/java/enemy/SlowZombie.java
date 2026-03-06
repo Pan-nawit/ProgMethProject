@@ -1,4 +1,4 @@
-package Enemy;
+package enemy;
 
 import Player.Player;
 import Status.Limping;
