@@ -3,16 +3,12 @@ package Sound;
 import javax.sound.sampled.*;
 import java.net.URL;
 
-/**
- * SoundManager — จัดการ volume ของ BGM และ SFX ทั้งหมด
- * ใช้งานผ่าน SoundManager.getInstance()
- */
 public class SoundManager {
 
     private static final SoundManager INSTANCE = new SoundManager();
     public static SoundManager getInstance() { return INSTANCE; }
 
-    private float sfxVolume  = 0.8f; // 0.0 - 1.0
+    private float sfxVolume   = 0.8f;
     private float musicVolume = 0.7f;
 
     private Clip bgmClip;
@@ -25,7 +21,8 @@ public class SoundManager {
         stopBGM();
         new Thread(() -> {
             try {
-                URL url = getClass().getResource(resourcePath);
+                URL url = SoundManager.class.getClassLoader()
+                        .getResource(resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath);
                 if (url == null) {
                     System.out.println("⚠️ BGM not found: " + resourcePath);
                     return;
@@ -55,7 +52,8 @@ public class SoundManager {
     public void playSFX(String resourcePath) {
         new Thread(() -> {
             try {
-                URL url = getClass().getResource(resourcePath);
+                URL url = SoundManager.class.getClassLoader()
+                        .getResource(resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath);
                 if (url == null) {
                     System.out.println("⚠️ SFX not found: " + resourcePath);
                     return;
@@ -79,10 +77,7 @@ public class SoundManager {
 
     public void setMusicVolume(float volume) {
         this.musicVolume = clamp(volume);
-        // อัปเดต BGM ที่กำลังเล่นอยู่ทันที
-        if (bgmClip != null && bgmClip.isOpen()) {
-            applyVolume(bgmClip, musicVolume);
-        }
+        if (bgmClip != null && bgmClip.isOpen()) applyVolume(bgmClip, musicVolume);
     }
 
     public float getSfxVolume()   { return sfxVolume; }
@@ -93,8 +88,7 @@ public class SoundManager {
     private void applyVolume(Clip clip, float volume) {
         if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
             FloatControl gain = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-            // แปลง 0.0-1.0 → dB (min -80dB, max 0dB)
-            float dB = volume == 0f ? -80f : (float) (Math.log10(volume) * 20);
+            float dB = volume == 0f ? -80f : (float)(Math.log10(volume) * 20);
             gain.setValue(Math.max(gain.getMinimum(), Math.min(dB, gain.getMaximum())));
         }
     }

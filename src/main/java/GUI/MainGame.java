@@ -118,7 +118,7 @@ public class MainGame extends Application {
 
     void showMainMenu() {
         if (loop != null) loop.stop();
-        SoundManager.getInstance().playBGM("/Sound/BGM/menu.wav");
+        SoundManager.getInstance().playBGM("/Sound/BGM/main.wav");
         stage.setScene(new MainMenu(stage, this::startGame, terrain, playerWalk).buildScene());
     }
 
@@ -183,7 +183,7 @@ public class MainGame extends Application {
 
     private void showCredits() {
         if (loop != null) loop.stop();
-        SoundManager.getInstance().stopBGM();
+        SoundManager.getInstance().playBGM("/Sound/BGM/main.wav");
         if (unlockedStages < 4) unlockedStages = 4;
         Canvas c = new Canvas(W, H);
         Scene sc = new Scene(new StackPane(c));
