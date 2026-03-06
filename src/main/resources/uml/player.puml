@@ -1,0 +1,53 @@
+@startuml
+class Player.Player {
+- int hp
+- int speed
+- int maxHp
+- int defaultSpeed
+- int x
+- int width
+- int height
+- char lastFacing
+- double recoil
+- double maxRecoil
+- float mouseX
+- float mouseY
+- List<Status> statusList
+- List<Item> inventory
+- int selectedItemIndex
++ <<Create>> Player()
++ void move(char)
++ Weapon getEquippedWeapon()
++ void removeItem(Item)
++ void onAttacked(int,Status)
++ void applyKnockback(int)
++ void addRecoil(double)
++ void recoverRecoil()
++ void addItem(Item)
++ void addStatus(Status)
+- boolean hasStatus(String)
++ void removeStatus(String)
++ Rectangle getBounds()
++ int getHp()
++ void setHp(int)
++ int getSpeed()
++ int getDefaultSpeed()
++ void setSpeed(int)
++ int getX()
++ int getY()
++ int getWidth()
++ int getHeight()
++ double getRecoil()
++ List<Item> getInventory()
++ List<Status> getStatusList()
++ void useSelectedConsumable()
++ int getSelectedItemIndex()
++ void setSelectedItemIndex(int)
++ float getMouseX()
++ float getMouseY()
++ void setMousePos(float,float)
++ double getMaxRecoil()
+}
+
+
+@enduml

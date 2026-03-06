@@ -22,6 +22,15 @@ import javafx.stage.Stage;
 import java.util.HashMap;
 import java.util.Map;
 
+import Item.Weapon.Pistol;
+import Item.Weapon.MachineGun;
+import Item.Weapon.Shotgun;
+
+// Since your HealingItem folder is closed in the screenshot, I am assuming
+// these are the correct names. If they are slightly different, just match the spelling!
+import Item.HealingItem.Medkit;
+import Item.HealingItem.Bandage;
+
 public class MainGame extends Application {
 
     // ── Stage state ───────────────────────────────────
@@ -136,6 +145,19 @@ public class MainGame extends Application {
         gameLogic = new GameLogic();
         gameLogic.initGame(selectedStage);
         animTick = 0;
+
+        // ─── START WITH ALL ITEMS ───
+        var p = gameLogic.player;
+        try {
+            p.addItem(new Pistol());
+            p.addItem(new MachineGun());
+            p.addItem(new Shotgun());
+            p.addItem(new Medkit());
+            p.addItem(new Bandage());
+        } catch (Exception e) {
+            System.out.println("Failed to add starting items: " + e.getMessage());
+        }
+        // ──────────────────────────
 
         SoundManager.getInstance().playBGM("/Sound/BGM/game.wav");
 
